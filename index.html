@@ -617,14 +617,26 @@ document.addEventListener('alpine:init', () => {
   const today = () => new Date().toISOString().slice(0, 10);
 
   /* ══════════════════════════════════════════════════════════════════
-     SUPABASE
-     Публикуемый (anon) ключ безопасно держать в клиентском коде — он и
-     задуман публичным и защищён политиками RLS на стороне БД. Так как
-     файл уедет на публичный GitHub Pages, ОБЯЗАТЕЛЬНО включи Row Level
-     Security на всех таблицах, иначе данные будут доступны любому.
-     ══════════════════════════════════════════════════════════════════ */
-  const SUPABASE_URL = 'https://dv-eyi-nV0gr1cwits7C1w.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_dv-eyi-nV0gr1cwits7C1w_0Y74LxLO';
+  /* ╔══════════════════════════════════════════════════════════════════╗
+     ║  👇 ВСТАВЬ СЮДА СВОИ РЕАЛЬНЫЕ ДОСТУПЫ ИЗ SUPABASE                   ║
+     ║  Dashboard → Settings → API:                                       ║
+     ║   • Project URL  — вида https://xxxxxxxxxxxxxxxxxxxx.supabase.co    ║
+     ║     (20 строчных букв/цифр, без заглавных и дефисов)               ║
+     ║   • anon / public key — длинный JWT 'eyJ...' ИЛИ 'sb_publishable_' ║
+     ║  anon-ключ безопасно держать в клиентском коде — он публичный и    ║
+     ║  защищён политиками RLS. RLS на всех таблицах ОБЯЗАТЕЛЕН, т.к.      ║
+     ║  файл лежит на публичном GitHub Pages.                             ║
+     ╚══════════════════════════════════════════════════════════════════╝ */
+  const SUPABASE_URL = 'https://naiwkxldpoteyscvcsjp.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5haXdreGxkcG90ZXlzY3Zjc2pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMDkwOTMsImV4cCI6MjA5OTc4NTA5M30.KtnjKZWEx-7TTN-RBtoBx0WO072H5t2ut3n64diquaM';
+
+  // Детектор незаменённых демо-значений: их реф невалиден (заглавные+дефисы),
+  // домен не существует → fetch падает на DNS. Показываем понятную подсказку.
+  const IS_PLACEHOLDER =
+    SUPABASE_URL.includes('dv-eyi-nV0gr1cwits7C1w') ||
+    SUPABASE_ANON_KEY.includes('dv-eyi-nV0gr1cwits7C1w') ||
+    !/^https:\/\/[a-z0-9]{20}\.supabase\.co\/?$/.test(SUPABASE_URL);
+
   // window.supabase — глобал из UMD-сборки SDK; .createClient создаёт инстанс.
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -856,6 +868,13 @@ document.addEventListener('alpine:init', () => {
     /** Загрузка/перезагрузка всех таблиц. Используется в init() и при
         откате после неудачной оптимистичной мутации. */
     async loadAll() {
+      // Если доступы не заменены на реальные — не бьёмся в несуществующий домен,
+      // а сразу показываем понятную подсказку.
+      if (IS_PLACEHOLDER) {
+        this.loading = false;
+        this.loadError = 'Демо-доступы Supabase не заменены. Вставь реальные Project URL и anon-ключ (Settings → API) в начало <script> и перезалей файл.';
+        return;
+      }
       this.loading = true;
       this.loadError = '';
       try {
@@ -875,7 +894,10 @@ document.addEventListener('alpine:init', () => {
         const nameById = Object.fromEntries(this.envelopes.map((e) => [e.id, e.name]));
         this.transactions = (tx.data || []).map((r) => fromTx(r, nameById));
       } catch (err) {
-        this.loadError = 'Не удалось загрузить данные из Supabase. Проверь URL/ключ проекта и политики RLS.';
+        // Показываем настоящий текст ошибки — так сразу видно причину
+        // (сетевой сбой / неверный ключ / отсутствующая политика RLS и т.п.)
+        const detail = err?.message || String(err);
+        this.loadError = 'Не удалось загрузить данные из Supabase: ' + detail + '. Проверь URL/ключ проекта и политики RLS.';
         console.error('[loadAll]', err);
       } finally {
         this.loading = false;
