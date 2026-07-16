@@ -54,7 +54,7 @@
 
 <div x-data="commandCenter" x-cloak class="flex min-h-screen">
 
-  <!-- ═══════════════ САЙДБАР ═══════════════ -->
+  <!-- ═══════════════ САЙДБАР (иконки на мобиле, полный на lg) ═══════════════ -->
   <aside class="sticky top-0 flex h-screen w-16 shrink-0 flex-col border-r border-edge bg-panel lg:w-60">
     <div class="flex items-center gap-3 px-4 py-6 lg:px-6">
       <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-accent font-display text-sm font-bold text-white shadow-[0_0_20px_#3b82f680]">A</div>
@@ -99,6 +99,7 @@
       <span x-text="loadError"></span>
       <button @click="loadAll()" class="shrink-0 rounded-lg border border-red-500/30 px-3 py-1 text-xs font-medium text-red-200 transition-colors hover:bg-red-500/15">Повторить</button>
     </div>
+
 
     <!-- ─────────── 1. ОБЗОР ─────────── -->
     <section x-show="tab === 'dashboard'" x-transition:enter.opacity.duration.300ms class="space-y-6">
@@ -179,6 +180,7 @@
               <div class="flex items-center gap-4 py-3">
                 <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border"
                      :class="t.type === 'income' ? 'border-neon/20 bg-neon/10 text-neon' : 'border-accent/20 bg-accent/10 text-accent'">
+                  <!-- инлайн-SVG: элементы создаются Alpine динамически -->
                   <svg x-show="t.type === 'income'" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 7 10 10"/><path d="M17 7v10H7"/></svg>
                   <svg x-show="t.type !== 'income'" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
                 </div>
@@ -296,7 +298,7 @@
       </div>
 
       <div class="grid gap-6 xl:grid-cols-5">
-        <!-- Форма внесения и распределения -->
+        <!-- Форма внесения и распределения (Вариант Б) -->
         <div class="rounded-2xl border border-edge bg-panel p-6 xl:col-span-2">
           <h3 class="font-display text-base font-semibold text-white">Внести платёж</h3>
           <p class="mt-1 text-sm text-muted">Укажи сумму и распредели её по конвертам вручную.</p>
@@ -379,7 +381,7 @@
         </div>
         <button @click="crmFormOpen = !crmFormOpen"
           class="flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-all hover:brightness-110 hover:shadow-[0_0_24px_#3b82f655]">
-          <span x-text="crmFormOpen ? '✕  Закрыть' : '+ Новая запись'"></span>
+          <span x-text="crmFormOpen ? '✕ Закрыть' : '+ Новая запись'"></span>
         </button>
       </div>
 
@@ -444,7 +446,7 @@
       </div>
     </section>
 
-    <!-- ─────────── 5. GA4 АНАЛИТИКА ─────────── -->
+    <!-- ─────────── 5. GA4 АНАЛИТИКА (заглушка под Data API) ─────────── -->
     <section x-show="tab === 'analytics'" x-transition:enter.opacity.duration.300ms class="space-y-6">
       <div>
         <h2 class="font-display text-xl font-semibold tracking-tight text-white">GA4 Аналитика</h2>
@@ -453,7 +455,7 @@
 
       <template x-for="site in analytics" :key="site.id">
         <div class="rounded-2xl border border-edge bg-panel p-6">
-          <!-- Шапка проекта -->
+          <!-- Шапка проекта: название, тип, кнопки быстрой навигации -->
           <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
             <div>
               <div class="flex items-center gap-2">
@@ -462,7 +464,7 @@
               </div>
               <p class="mt-1 text-xs text-muted" x-text="site.kindLabel"></p>
             </div>
-            <!-- Быстрые ссылки -->
+            <!-- Быстрые ссылки на реальные ресурсы -->
             <div class="flex flex-wrap items-center gap-2">
               <template x-for="r in site.resources" :key="r.label">
                 <a :href="isLink(r.url) ? r.url : '#'"
@@ -481,7 +483,7 @@
           </div>
 
           <div class="grid gap-6 lg:grid-cols-3">
-            <!-- Метрики -->
+            <!-- Метрики: просмотры / подписчики / сессии / конверсии -->
             <div class="grid grid-cols-2 gap-3 lg:grid-cols-1">
               <template x-for="m in site.metrics" :key="m.label">
                 <div class="rounded-xl border border-edge bg-base p-4">
@@ -491,7 +493,7 @@
               </template>
             </div>
 
-            <!-- Интерактивный мини-график -->
+            <!-- Интерактивный мини-график (плавная кривая + точки с подсказками) -->
             <div class="rounded-xl border border-edge bg-base p-4">
               <div class="mb-2 flex items-center justify-between">
                 <p class="text-xs text-muted" x-text="site.seriesLabel"></p>
@@ -507,7 +509,7 @@
                 <path :d="smoothPath(site.series, 300, 120) + ' L 294,114 L 6,114 Z'" :fill="'url(#fill-' + site.id + ')'" stroke="none"/>
                 <path :d="smoothPath(site.series, 300, 120)" fill="none" :stroke="site.color" stroke-width="2.5"
                       stroke-linecap="round" :style="`filter: drop-shadow(0 0 6px ${site.color}80)`"/>
-                <!-- Интерактивные точки -->
+                <!-- Интерактивные точки: наведение показывает значение дня -->
                 <template x-for="(p, i) in chartPoints(site.series, 300, 120)" :key="i">
                   <g class="group">
                     <circle :cx="p.x" :cy="p.y" r="2.5" :fill="site.color"/>
@@ -519,18 +521,19 @@
               </svg>
             </div>
 
-            <!-- Прогресс-бары -->
+            <!-- Прогресс-бары: источники трафика / распределение аудитории -->
             <div class="rounded-xl border border-edge bg-base p-4">
               <p class="mb-3 text-xs text-muted" x-text="site.distLabel"></p>
               <div class="space-y-3">
                 <template x-for="d in site.distribution" :key="d.name">
                   <div>
-                    <div class="flex items-center justify-between text-xs">
-                      <span class="text-muted" x-text="d.name"></span>
-                      <span class="font-medium text-white" x-text="d.value"></span>
+                    <div class="mb-1 flex justify-between text-xs">
+                      <span class="text-gray-300" x-text="d.name"></span>
+                      <span class="text-muted" x-text="d.share + '%'"></span>
                     </div>
-                    <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-edge">
-                      <div class="h-full rounded-full bg-accent" :style="`width: ${d.pct}%; background-color: ${site.color}`"></div>
+                    <div class="h-2.5 w-full overflow-hidden rounded-full bg-edge">
+                      <div class="h-full rounded-full transition-all duration-700"
+                           :style="`width:${d.share}%; background:linear-gradient(90deg,${site.color}99,${site.color}); box-shadow:0 0 12px ${site.color}66`"></div>
                     </div>
                   </div>
                 </template>
@@ -540,489 +543,539 @@
         </div>
       </template>
     </section>
-
   </main>
 
-  <!-- ═══════════════ МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ ЗАДАЧИ ═══════════════ -->
-  <div x-show="taskModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-transition.opacity>
-    <div class="absolute inset-0 bg-base/80 backdrop-blur-sm" @click="taskModal = false"></div>
-    <div class="relative w-full max-w-md rounded-2xl border border-edge bg-panel p-6 shadow-2xl" @click.stop>
-      <h3 class="font-display text-lg font-bold text-white">Новая задача</h3>
-      <div class="mt-4 space-y-4">
-        <div>
-          <label class="text-xs text-muted">Название</label>
-          <input x-model="newTask.title" class="mt-1 w-full rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none focus:border-accent" />
-        </div>
-        <div>
-          <label class="text-xs text-muted">Описание</label>
-          <textarea x-model="newTask.description" class="mt-1 h-20 w-full rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none focus:border-accent resize-none"></textarea>
-        </div>
+  <!-- ═══════════════ МОДАЛКА: НОВАЯ ЗАДАЧА ═══════════════ -->
+  <div x-show="taskModal" @click.self="taskModal = false" @keydown.escape.window="taskModal = false"
+       x-transition:enter.opacity.duration.200ms x-transition:leave.opacity.duration.150ms
+       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+    <div x-show="taskModal" x-transition:enter="transition duration-200 ease-out"
+         x-transition:enter-start="scale-95 opacity-0" x-transition:enter-end="scale-100 opacity-100"
+         class="w-full max-w-md rounded-2xl border border-edge bg-panel p-6 shadow-2xl">
+      <div class="mb-5 flex items-center justify-between">
+        <h3 class="font-display text-lg font-semibold text-white">Новая задача</h3>
+        <button @click="taskModal = false" class="text-muted hover:text-white" aria-label="Закрыть">
+          <i data-lucide="x" class="h-[18px] w-[18px]"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <input x-model="taskForm.title" x-ref="taskTitle" placeholder="Название задачи"
+          class="w-full rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none placeholder:text-muted/40 focus:border-accent" />
+        <textarea x-model="taskForm.description" placeholder="Описание" rows="3"
+          class="w-full resize-none rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none placeholder:text-muted/40 focus:border-accent"></textarea>
         <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="text-xs text-muted">Проект</label>
-            <input x-model="newTask.project" class="mt-1 w-full rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none focus:border-accent" />
-          </div>
-          <div>
-            <label class="text-xs text-muted">Приоритет</label>
-            <select x-model="newTask.priority" class="mt-1 w-full rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none focus:border-accent">
-              <option value="low">Низкий</option>
-              <option value="medium">Средний</option>
-              <option value="high">Высокий</option>
-            </select>
-          </div>
+          <input x-model="taskForm.project" placeholder="Проект"
+            class="rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none focus:border-accent" />
+          <select x-model="taskForm.priority"
+            class="rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none focus:border-accent">
+            <option value="high">Высокий</option>
+            <option value="medium">Средний</option>
+            <option value="low">Низкий</option>
+          </select>
         </div>
       </div>
-      <div class="mt-6 flex justify-end gap-3">
-        <button @click="taskModal = false" class="rounded-xl border border-edge px-4 py-2.5 text-sm text-muted hover:bg-white/5">Отмена</button>
-        <button @click="addTask()" class="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:brightness-110">Создать</button>
-      </div>
+
+      <button @click="addTask()" :disabled="!taskForm.title.trim()"
+        class="mt-5 w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40">
+        Создать задачу
+      </button>
     </div>
   </div>
 
+  <!-- Всплывающее уведомление о фоновых операциях (внутри x-data) -->
+  <div x-show="banner.show" x-transition x-cloak
+       class="fixed bottom-5 left-1/2 z-[60] -translate-x-1/2 rounded-xl border px-4 py-2.5 text-sm shadow-2xl backdrop-blur"
+       :class="banner.type === 'error'
+         ? 'border-red-500/30 bg-red-500/15 text-red-200'
+         : 'border-neon/30 bg-neon/15 text-neon'"
+       x-text="banner.msg"></div>
+
 </div>
 
-<!-- ══ Логика приложения (Supabase + Alpine.js) ══ -->
+<!-- ═══════════════════════════════════════════════════════════════════
+     ЛОГИКА ALPINE.JS — весь стейт и методы Command Center.
+     SUPABASE (шаг 2): моки ниже заменяются на supabase-js (CDN),
+     точки интеграции помечены комментарием «SUPABASE:».
+     ═══════════════════════════════════════════════════════════════════ -->
 <script>
-  // Укажи здесь свои ключи от Supabase
-  const SUBAPASE_URL = "https://dv-eyi-nv0gr1cwits7c.supabase.co"; 
-  const SUPABASE_ANON_KEY = "ТВОЙ_ПУБЛИЧНЫЙ_ANON_KEY"; 
+document.addEventListener('alpine:init', () => {
+  /* ── Инлайн-иконки Lucide для конвертов (рендер через x-html,
+        т.к. элементы в x-for создаются динамически) ── */
+  const svg = (paths) =>
+    `<svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
 
-  const supabase = window.supabase ? window.supabase.createClient(SUBAPASE_URL, SUPABASE_ANON_KEY) : null;
+  const ICONS = {
+    utensils: svg('<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>'),
+    trending: svg('<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>'),
+    shield:   svg('<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>'),
+    car:      svg('<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>'),
+    briefcase: svg('<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>'),
+  };
 
-  document.addEventListener('alpine:init', () => {
-    Alpine.data('commandCenter', () => ({
-      tab: 'dashboard',
-      loading: false,
-      loadError: null,
+  const uid = () => Math.random().toString(36).slice(2, 10);
+  const today = () => new Date().toISOString().slice(0, 10);
 
-      // Сайдбар меню
-      nav: [
-        { id: 'dashboard', label: 'Обзор', icon: 'layout-dashboard' },
-        { id: 'tasks', label: 'Задачи', icon: 'kanban' },
-        { id: 'finance', label: 'Бухгалтерия', icon: 'wallet' },
-        { id: 'crm', label: 'Threads CRM', icon: 'users' },
-        { id: 'analytics', label: 'GA4 Аналитика', icon: 'bar-chart-3' }
-      ],
+  /* ══════════════════════════════════════════════════════════════════
+     SUPABASE
+     Публикуемый (anon) ключ безопасно держать в клиентском коде — он и
+     задуман публичным и защищён политиками RLS на стороне БД. Так как
+     файл уедет на публичный GitHub Pages, ОБЯЗАТЕЛЬНО включи Row Level
+     Security на всех таблицах, иначе данные будут доступны любому.
+     ══════════════════════════════════════════════════════════════════ */
+  const SUPABASE_URL = 'https://dv-eyi-nV0gr1cwits7C1w.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_dv-eyi-nV0gr1cwits7C1w_0Y74LxLO';
+  // window.supabase — глобал из UMD-сборки SDK; .createClient создаёт инстанс.
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      // Состояние для Канбан задач
-      taskModal: false,
-      columns: [
-        { id: 'todo', title: 'К выполнению' },
-        { id: 'progress', title: 'В работе' },
-        { id: 'done', title: 'Готово' }
-      ],
-      tasks: [],
-      newTask: { title: '', description: '', project: 'AKU', priority: 'medium', status: 'todo' },
+  /* Нормализация имени иконки из БД (icon_name) к ключам карты ICONS */
+  const ICON_ALIASES = {
+    'trending-up': 'trending', 'shield-check': 'shield',
+    utensils: 'utensils', trending: 'trending', shield: 'shield', car: 'car', briefcase: 'briefcase',
+  };
+  const iconFor = (name) => ICONS[ICON_ALIASES[name] || name] || ICONS.briefcase;
 
-      priorityMeta: {
-        low: { label: 'Низкий', cls: 'border-blue-500/20 bg-blue-500/5 text-blue-400' },
-        medium: { label: 'Средний', cls: 'border-yellow-500/20 bg-yellow-500/5 text-yellow-400' },
-        high: { label: 'Высокий', cls: 'border-red-500/20 bg-red-500/5 text-red-400' }
-      },
-
-      // Финансы
-      envelopes: [],
-      transactions: [],
-      incomeAmount: '',
-      incomeNote: '',
-      alloc: {},
-      txFilter: 'all',
-      txFilters: [
-        { id: 'all', label: 'Все' },
-        { id: 'income', label: 'Доходы' },
-        { id: 'allocation', label: 'Распределение' }
-      ],
-
-      // Цель Porsche
-      porsche: {
-        balance: 0,
-        target: 320000 // Примерная стоимость Porsche 911 Turbo S в $
-      },
-
-      // Живой счетчик
-      audience: [
-        { id: 'tg', label: 'Telegram', value: '14,250', accent: 'blue' },
-        { id: 'inst', label: 'Instagram', value: '8,420', accent: 'blue' },
-        { id: 'tt', label: 'TikTok', value: '31,100', accent: 'green' }
-      ],
-
-      // Threads CRM
-      crmFormOpen: false,
-      crm: [],
-      crmForm: { nickname: '', profileUrl: '', postUrl: '', status: 'lead', notes: '' },
-      statusOrder: ['lead', 'contacted', 'warm', 'deal', 'lost'],
-      crmStatusMeta: {
-        lead: { label: 'Новый лид', cls: 'border-blue-500/20 bg-blue-500/10 text-blue-400' },
-        contacted: { label: 'Контакт установлен', cls: 'border-purple-500/20 bg-purple-500/10 text-purple-400' },
-        warm: { label: 'Интерес проявлен', cls: 'border-yellow-500/20 bg-yellow-500/10 text-yellow-400' },
-        deal: { label: 'Сделка закрыта', cls: 'border-neon/20 bg-neon/10 text-neon' },
-        lost: { label: 'Отказ', cls: 'border-red-500/20 bg-red-500/10 text-red-400' }
-      },
-
-      // GA4 & Экосистема Аналитика (Демо-данные)
-      analytics: [
-        {
-          id: 'media',
-          name: 'AKU Media',
-          color: '#3b82f6',
-          kindLabel: 'Медиа-агентство & Контент-продакшн',
-          seriesLabel: 'Уникальные просмотры за неделю',
-          series: [1200, 1540, 1890, 1420, 2100, 2450, 3100],
-          distLabel: 'Популярные платформы контента',
-          distribution: [
-            { name: 'TikTok (HeyGen Аватары)', value: '18,400', pct: 85 },
-            { name: 'Instagram Reels', value: '2,200', pct: 10 },
-            { name: 'YouTube Shorts', value: '1,100', pct: 5 }
-          ],
-          metrics: [
-            { label: 'Органика за 7 дней', value: '+45.2%', accent: 'neon' },
-            { label: 'Всего просмотров', value: '210.4K', accent: 'white' }
-          ],
-          resources: [
-            { label: 'TikTok Канал', url: 'https://tiktok.com' },
-            { label: 'HeyGen Аватар', url: 'https://heygen.com' }
-          ]
-        },
-        {
-          id: 'automation',
-          name: 'AKU Automation',
-          color: '#10b981',
-          kindLabel: 'Бот-платформы & AI-интеграции',
-          seriesLabel: 'Запросы к API / ботам за неделю',
-          series: [450, 620, 580, 890, 1100, 1050, 1340],
-          distLabel: 'Популярность ботов в экосистеме',
-          distribution: [
-            { name: 'AKU Jobs Hub (Телеграм)', value: '820 юзеров', pct: 70 },
-            { name: 'Father Tip Webpage', value: '210 юзеров', pct: 18 },
-            { name: 'Другие утилиты', value: '140 юзеров', pct: 12 }
-          ],
-          metrics: [
-            { label: 'Конверсия в запуск', value: '18%', accent: 'neon' },
-            { label: 'Всего сессий AI', value: '12,450', accent: 'white' }
-          ],
-          resources: [
-            { label: 'Jobs Hub Bot', url: 'https://t.me' },
-            { label: 'Father Tipping Site', url: 'https://bathhouse-tips.ru' }
-          ]
-        }
-      ],
-
-      init() {
-        this.loadAll();
-        // Рендерим иконки Lucide при первом запуске
-        this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
-      },
-
-      setTab(id) {
-        this.tab = id;
-        this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
-      },
-
-      // Ссылка валидна?
-      isLink(url) {
-        return url && url.startsWith('http');
-      },
-
-      // Форматирование валюты
-      money(val) {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val || 0);
-      },
-
-      // Форматирование даты
-      fmtDate(dString) {
-        if (!dString) return '';
-        const d = new Date(dString);
-        return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-      },
-
-      // Валидация числового ввода
-      clean(val) {
-        return String(val).replace(/[^0-9.]/g, '');
-      },
-
-      // Загрузка всех данных из БД Supabase
-      async loadAll() {
-        if (!supabase) {
-          this.loadError = "Supabase SDK не инициализирован. Проверь ключи в скрипте.";
-          return;
-        }
-        this.loading = true;
-        this.loadError = null;
-
-        try {
-          // Загружаем задачи
-          const { data: dbTasks, error: errTasks } = await supabase
-            .from('tasks')
-            .select('*')
-            .order('created_at', { ascending: true });
-          if (errTasks) throw errTasks;
-          this.tasks = dbTasks || [];
-
-          // Загружаем конверты
-          const { data: dbEnvelopes, error: errEnvelopes } = await supabase
-            .from('envelopes')
-            .select('*')
-            .order('id', { ascending: true });
-          if (errEnvelopes) throw errEnvelopes;
-          this.envelopes = dbEnvelopes || [];
-
-          // Загружаем транзакции
-          const { data: dbTx, error: errTx } = await supabase
-            .from('transactions')
-            .select('*')
-            .order('date', { ascending: false });
-          if (errTx) throw errTx;
-          this.transactions = dbTx || [];
-
-          // Рассчитываем баланс Porsche
-          const porscheEnv = this.envelopes.find(e => e.name.toLowerCase().includes('porsche') || e.name.toLowerCase().includes('цель'));
-          if (porscheEnv) {
-            this.porsche.balance = porscheEnv.balance;
-          }
-
-          // Загружаем Threads CRM
-          const { data: dbCrm, error: errCrm } = await supabase
-            .from('threads_crm')
-            .select('*')
-            .order('lastTouch', { ascending: false });
-          if (errCrm) throw errCrm;
-          this.crm = dbCrm || [];
-
-          // Заполняем форму распределения финансов нулями
-          this.envelopes.forEach(e => { this.alloc[e.id] = ''; });
-
-        } catch (e) {
-          console.error("Ошибка Supabase:", e);
-          this.loadError = `Ошибка соединения с базой: ${e.message || e}`;
-        } finally {
-          this.loading = false;
-        }
-      },
-
-      // КАНБАН: фильтр задач по статусу
-      tasksBy(status) {
-        return this.tasks.filter(t => t.status === status);
-      },
-
-      // КАНБАН: добавление задачи
-      async addTask() {
-        if (!this.newTask.title.trim()) return;
-        try {
-          const { data, error } = await supabase
-            .from('tasks')
-            .insert([{
-              title: this.newTask.title,
-              description: this.newTask.description,
-              project: this.newTask.project,
-              priority: this.newTask.priority,
-              status: this.newTask.status
-            }])
-            .select();
-          if (error) throw error;
-          if (data) this.tasks.push(data[0]);
-          this.taskModal = false;
-          this.newTask = { title: '', description: '', project: 'AKU', priority: 'medium', status: 'todo' };
-        } catch (e) {
-          alert('Ошибка добавления задачи: ' + e.message);
-        }
-      },
-
-      // КАНБАН: перемещение задачи
-      async moveTask(id, direction) {
-        const t = this.tasks.find(x => x.id === id);
-        if (!t) return;
-        const states = ['todo', 'progress', 'done'];
-        const curIdx = states.indexOf(t.status);
-        const nextIdx = curIdx + direction;
-        if (nextIdx >= 0 && nextIdx < states.length) {
-          const nextStatus = states[nextIdx];
-          try {
-            const { error } = await supabase
-              .from('tasks')
-              .update({ status: nextStatus })
-              .eq('id', id);
-            if (error) throw error;
-            t.status = nextStatus;
-          } catch (e) {
-            alert('Ошибка перемещения задачи: ' + e.message);
-          }
-        }
-      },
-
-      // ФИНАНСЫ: сумма всех конвертов
-      get totalBalance() {
-        return this.envelopes.reduce((acc, e) => acc + (e.balance || 0), 0);
-      },
-
-      // ФИНАНСЫ: остаток нераспределенного платежа
-      get remaining() {
-        const totalAlloc = Object.values(this.alloc).reduce((acc, val) => acc + (Number(val) || 0), 0);
-        return (Number(this.incomeAmount) || 0) - totalAlloc;
-      },
-
-      // ФИНАНСЫ: валидность распределения
-      get allocValid() {
-        const amt = Number(this.incomeAmount) || 0;
-        return amt > 0 && this.remaining === 0;
-      },
-
-      // ФИНАНСЫ: залить весь остаток в один конверт
-      fillRemainder(envId) {
-        const curAlloc = Number(this.alloc[envId]) || 0;
-        this.alloc[envId] = String(curAlloc + this.remaining);
-      },
-
-      // ФИНАНСЫ: проведение платежа и распределение в БД
-      async distribute() {
-        if (!this.allocValid) return;
-        try {
-          this.loading = true;
-
-          // 1. Создаем транзакцию Дохода (income)
-          const { data: txData, error: txErr } = await supabase
-            .from('transactions')
-            .insert([{
-              type: 'income',
-              amount: Number(this.incomeAmount),
-              note: this.incomeNote || 'Входящий платёж',
-              date: new Date().toISOString()
-            }])
-            .select();
-          if (txErr) throw txErr;
-
-          // 2. Создаем транзакции распределения для каждого конверта и обновляем их баланс
-          for (const envId in this.alloc) {
-            const amount = Number(this.alloc[envId]) || 0;
-            if (amount <= 0) continue;
-
-            const env = this.envelopes.find(e => e.id == envId);
-            if (!env) continue;
-
-            // Логируем распределение
-            await supabase
-              .from('transactions')
-              .insert([{
-                type: 'allocation',
-                amount: amount,
-                envelopeId: env.id,
-                envelopeName: env.name,
-                note: `Распределение: ${this.incomeNote || 'Платёж'}`,
-                date: new Date().toISOString()
-              }]);
-
-            // Обновляем баланс самого конверта
-            const newBalance = (env.balance || 0) + amount;
-            await supabase
-              .from('envelopes')
-              .update({ balance: newBalance })
-              .eq('id', env.id);
-          }
-
-          // Сбрасываем форму и перегружаем данные
-          this.incomeAmount = '';
-          this.incomeNote = '';
-          await this.loadAll();
-          alert('Средства распределены!');
-        } catch (e) {
-          alert('Ошибка распределения средств: ' + e.message);
-        } finally {
-          this.loading = false;
-        }
-      },
-
-      // ФИНАНСЫ: фильтрация списка транзакций
-      get filteredTx() {
-        if (this.txFilter === 'all') return this.transactions;
-        return this.transactions.filter(t => t.type === this.txFilter);
-      },
-
-      // CRM: добавить запись
-      async addCrm() {
-        if (!this.crmForm.nickname.trim()) return;
-        try {
-          const { data, error } = await supabase
-            .from('threads_crm')
-            .insert([{
-              nickname: this.crmForm.nickname,
-              profileUrl: this.crmForm.profileUrl,
-              postUrl: this.crmForm.postUrl,
-              status: this.crmForm.status,
-              notes: this.crmForm.notes,
-              lastTouch: new Date().toISOString()
-            }])
-            .select();
-          if (error) throw error;
-          if (data) this.crm.unshift(data[0]);
-
-          this.crmForm = { nickname: '', profileUrl: '', postUrl: '', status: 'lead', notes: '' };
-          this.crmFormOpen = false;
-        } catch (e) {
-          alert('Ошибка сохранения лида: ' + e.message);
-        }
-      },
-
-      // CRM: циклическая смена статуса по кнопке
-      async cycleStatus(id) {
-        const e = this.crm.find(x => x.id === id);
-        if (!e) return;
-        const curIdx = this.statusOrder.indexOf(e.status);
-        const nextIdx = (curIdx + 1) % this.statusOrder.length;
-        const nextStatus = this.statusOrder[nextIdx];
-        const now = new Date().toISOString();
-
-        try {
-          const { error } = await supabase
-            .from('threads_crm')
-            .update({ status: nextStatus, lastTouch: now })
-            .eq('id', id);
-          if (error) throw error;
-          e.status = nextStatus;
-          e.lastTouch = now;
-        } catch (e) {
-          alert('Ошибка изменения статуса: ' + e.message);
-        }
-      },
-
-      // ГРАФИКИ: Плавная кривая SVG Безье
-      smoothPath(data, width, height) {
-        if (!data || data.length < 2) return '';
-        const max = Math.max(...data) || 1;
-        const min = Math.min(...data) || 0;
-        const range = (max - min) || 1;
-
-        const points = data.map((val, i) => {
-          const x = 6 + (i * (width - 12) / (data.length - 1));
-          const y = height - 6 - ((val - min) * (height - 12) / range);
-          return { x, y };
-        });
-
-        let path = `M ${points[0].x},${points[0].y}`;
-        for (let i = 0; i < points.length - 1; i++) {
-          const p0 = points[i];
-          const p1 = points[i + 1];
-          const cpX1 = p0.x + (p1.x - p0.x) / 2;
-          const cpY1 = p0.y;
-          const cpX2 = p0.x + (p1.x - p0.x) / 2;
-          const cpY2 = p1.y;
-          path += ` C ${cpX1},${cpY1} ${cpX2},${cpY2} ${p1.x},${p1.y}`;
-        }
-        return path;
-      },
-
-      chartPoints(data, width, height) {
-        if (!data) return [];
-        const max = Math.max(...data) || 1;
-        const min = Math.min(...data) || 0;
-        const range = (max - min) || 1;
-
-        return data.map((val, i) => {
-          const x = 6 + (i * (width - 12) / (data.length - 1));
-          const y = height - 6 - ((val - min) * (height - 12) / range);
-          return { x, y, v: val };
-        });
-      }
-    }));
+  /* ── Мапперы: строка БД (snake_case) → форма приложения (camelCase) ── */
+  const fromEnvelope = (r) => ({
+    id: r.id, name: r.name, balance: Number(r.balance) || 0,
+    iconName: r.icon_name, icon: iconFor(r.icon_name),
+    target: r.target != null ? Number(r.target) : undefined,
   });
+  const fromTask = (r) => ({
+    id: r.id, title: r.title, description: r.description,
+    project: r.project, priority: r.priority, status: r.status,
+  });
+  const fromCrm = (r) => ({
+    id: r.id, nickname: r.nickname, profileUrl: r.profile_url, postUrl: r.post_url,
+    status: r.status, lastTouch: r.last_touch, notes: r.notes,
+  });
+  /* Транзакция: envelope_id → отображаемое имя конверта (по карте id→name) */
+  const fromTx = (r, nameById) => ({
+    id: r.id, date: r.date, type: r.type, amount: Number(r.amount) || 0,
+    note: r.note, envelopeId: r.envelope_id || null,
+    envelopeName: r.envelope_id ? (nameById[r.envelope_id] || '—') : undefined,
+  });
+  /* ── Мапперы: форма приложения → строка БД для записи ── */
+  const toTaskRow = (t) => ({
+    id: t.id, title: t.title, description: t.description,
+    project: t.project, priority: t.priority, status: t.status,
+  });
+  const toCrmRow = (c) => ({
+    id: c.id, nickname: c.nickname, profile_url: c.profileUrl, post_url: c.postUrl,
+    status: c.status, last_touch: c.lastTouch, notes: c.notes,
+  });
+
+  /* ── НАЧАЛЬНЫЕ ДАННЫЕ (моки) ──
+     SUPABASE: заменить на select из таблиц tasks / envelopes /
+     transactions / threads_crm / social_stats в init(). */
+
+  const INITIAL_TASKS = [
+    { id: 't1', title: 'Финализировать оффер на лендинге', description: 'Переписать первый экран под боль «теряете заявки ночью».', project: 'AKU Automation', priority: 'high',   status: 'todo' },
+    { id: 't2', title: 'Каталог авто: фильтр по цене',      description: 'Добавить диапазонный слайдер и сортировку.',                project: 'StolitsaAvto',   priority: 'medium', status: 'todo' },
+    { id: 't3', title: 'Скрипт прогрева в Threads',         description: '10 комментариев в день по нише, вести в CRM.',              project: 'AKU Media',      priority: 'high',   status: 'inprogress' },
+    { id: 't4', title: 'Настроить GA4 на сайте отца',       description: 'Поток данных + события кликов по телефону.',                project: 'Сайт-визитка',   priority: 'low',    status: 'done' },
+  ];
+
+  const INITIAL_ENVELOPES = [
+    { id: 'life',    name: 'Жизнь / Еда',           balance: 1850,  icon: ICONS.utensils },
+    { id: 'invest',  name: 'Инвестиции',            balance: 6200,  icon: ICONS.trending },
+    { id: 'safety',  name: 'Подушка безопасности',  balance: 4400,  icon: ICONS.shield },
+    { id: 'porsche', name: 'Фонд Porsche 911',      balance: 45000, icon: ICONS.car, target: 300000 },
+    { id: 'biz',     name: 'Оборот бизнеса',        balance: 9300,  icon: ICONS.briefcase },
+  ];
+
+  const INITIAL_TRANSACTIONS = [
+    { id: 'x1', date: '2026-07-14', type: 'income',     amount: 1200, note: 'Оплата: бот для автосалона' },
+    { id: 'x2', date: '2026-07-14', type: 'allocation', amount: 600,  envelopeName: 'Фонд Porsche 911', note: 'Распределение платежа' },
+    { id: 'x3', date: '2026-07-14', type: 'allocation', amount: 400,  envelopeName: 'Оборот бизнеса',   note: 'Распределение платежа' },
+    { id: 'x4', date: '2026-07-12', type: 'income',     amount: 800,  note: 'Консультация по интеграции ИИ' },
+  ];
+
+  const INITIAL_CRM = [
+    { id: 'c1', nickname: '@dmitry_ecom',    profileUrl: 'https://www.threads.net/@dmitry_ecom',    postUrl: 'https://www.threads.net/post/1', status: 'reply',   lastTouch: '2026-07-15', notes: 'Спросил про цену бота — дать вилку и кейс.' },
+    { id: 'c2', nickname: '@marketing_olga', profileUrl: 'https://www.threads.net/@marketing_olga', postUrl: 'https://www.threads.net/post/2', status: 'waiting', lastTouch: '2026-07-14', notes: 'Отправил КП, ждёт согласования бюджета.' },
+    { id: 'c3', nickname: '@auto_leads_by',  profileUrl: 'https://www.threads.net/@auto_leads_by',  postUrl: 'https://www.threads.net/post/3', status: 'dm',      lastTouch: '2026-07-13', notes: 'Тёплый: комментирует второй пост подряд.' },
+    { id: 'c4', nickname: '@startup_kate',   profileUrl: 'https://www.threads.net/@startup_kate',   postUrl: 'https://www.threads.net/post/4', status: 'reply',   lastTouch: '2026-07-15', notes: 'Уточнить нишу перед ответом.' },
+  ];
+
+  Alpine.data('commandCenter', () => ({
+    /* ══ НАВИГАЦИЯ ══ */
+    tab: 'dashboard',
+    nav: [
+      { id: 'dashboard', label: 'Обзор',          icon: 'layout-dashboard' },
+      { id: 'tasks',     label: 'Задачи',         icon: 'kanban-square' },
+      { id: 'finance',   label: 'Бухгалтерия',    icon: 'wallet' },
+      { id: 'crm',       label: 'Threads CRM',    icon: 'messages-square' },
+      { id: 'analytics', label: 'GA4 Аналитика',  icon: 'bar-chart-3' },
+    ],
+    setTab(id) { this.tab = id; },
+
+    /* ══ ДАННЫЕ ══ */
+    audience: [
+      { id: 'tg1',     label: 'TG 1',      value: '12.4k', accent: 'blue' },
+      { id: 'tg2',     label: 'TG 2',      value: '3.1k',  accent: 'blue' },
+      { id: 'yt',      label: 'YT',        value: '45.2k', accent: 'green' },
+      { id: 'threads', label: 'Threads',   value: '8.9k',  accent: 'blue' },
+      { id: 'tiktok',  label: 'TikTok',    value: '15.0k', accent: 'green' },
+      { id: 'ig',      label: 'Instagram', value: '22.1k', accent: 'blue' },
+    ],
+    // Данные загружаются из Supabase в init(). Стартуем пустыми, чтобы не
+    // показывать ложные моки; INITIAL_* оставлены ниже как справочный сид.
+    tasks: [],
+    envelopes: [],
+    transactions: [],
+    crm: [],
+    loading: true,      // индикатор первичной загрузки
+    loadError: '',      // текст ошибки соединения с БД
+    banner: { show: false, msg: '', type: 'error' }, // всплывающее уведомление
+    /* Мониторинг экосистемы AKU — 4 проекта.
+       url: '' / '#' → ссылка ещё не задана (кнопка станет неактивной).
+       SUPABASE/GA4: series, metrics и distribution приходят из
+       Google Analytics Data API (web) и API площадок (соцсети, бот). */
+    analytics: [
+      {
+        id: 'personal', name: 'Личный бренд · Alexey AI', kind: 'social',
+        kindLabel: 'Соцсети · агрегированная аудитория', color: '#10b981',
+        seriesLabel: 'Просмотры (14 дн.)', distLabel: 'Распределение аудитории',
+        resources: [
+          // Реальные хендлы подставь сюда — сейчас заглушки:
+          { label: 'Telegram',  url: '#' },
+          { label: 'YouTube',   url: '#' },
+          { label: 'TikTok',    url: '#' },
+          { label: 'Instagram', url: '#' },
+          { label: 'Threads',   url: '#' },
+        ],
+        metrics: [
+          { label: 'Просмотры / мес', value: '1.24M' },
+          { label: 'Подписчики',      value: '106.7k' },
+          { label: 'Вовлечённость',   value: '7.4%' },
+          { label: 'Прирост / нед',   value: '+2.3k', accent: 'neon' },
+        ],
+        series: [820, 910, 870, 1040, 1180, 990, 1320, 1210, 1450, 1380, 1520, 1610, 1490, 1740],
+        distribution: [
+          { name: 'YouTube', share: 42 }, { name: 'Instagram', share: 21 },
+          { name: 'Telegram', share: 15 }, { name: 'TikTok', share: 14 },
+          { name: 'Threads', share: 8 },
+        ],
+      },
+      {
+        id: 'media', name: 'AKU Media', kind: 'web',
+        kindLabel: 'Сайт + Telegram-канал', color: '#3b82f6',
+        seriesLabel: 'Сессии (14 дн.)', distLabel: 'Источники трафика',
+        resources: [
+          { label: 'Сайт',     url: 'https://akumedia.github.io/AKU-Media/' },
+          { label: 'TG-канал', url: '#' },
+        ],
+        metrics: [
+          { label: 'Сессии',        value: '3 840' },
+          { label: 'Пользователи',  value: '2 910' },
+          { label: 'Конверсии',     value: '96', accent: 'neon' },
+          { label: 'Время на сайте', value: '2м 41с' },
+        ],
+        series: [120, 145, 132, 180, 210, 175, 240, 220, 265, 251, 290, 310, 284, 335],
+        distribution: [
+          { name: 'Threads', share: 42 }, { name: 'Organic', share: 27 },
+          { name: 'Telegram', share: 19 }, { name: 'Direct', share: 12 },
+        ],
+      },
+      {
+        id: 'automation', name: 'AKU Automation', kind: 'web',
+        kindLabel: 'Сайт + Telegram-канал', color: '#10b981',
+        seriesLabel: 'Сессии (14 дн.)', distLabel: 'Источники трафика',
+        resources: [
+          { label: 'Сайт',     url: 'https://akumedia.github.io/AKU-Automation/' },
+          { label: 'TG-канал', url: '#' },
+        ],
+        metrics: [
+          { label: 'Сессии',        value: '5 120' },
+          { label: 'Пользователи',  value: '3 760' },
+          { label: 'Заявки',        value: '148', accent: 'neon' },
+          { label: 'Время на сайте', value: '3м 12с' },
+        ],
+        series: [160, 190, 175, 230, 260, 240, 300, 285, 330, 315, 360, 390, 370, 420],
+        distribution: [
+          { name: 'Organic', share: 38 }, { name: 'Threads', share: 24 },
+          { name: 'Telegram', share: 22 }, { name: 'Direct', share: 16 },
+        ],
+      },
+      {
+        id: 'jobshub', name: 'AKU Jobs Hub', kind: 'web',
+        kindLabel: 'Сайт + Telegram-бот + канал', color: '#3b82f6',
+        seriesLabel: 'Сессии (14 дн.)', distLabel: 'Источники трафика',
+        resources: [
+          { label: 'Сайт',   url: 'https://akumedia.github.io/AKU-Jobs-Hub-Website/' },
+          { label: 'TG-бот', url: 'https://t.me/AKUJobsHub_bot' },
+          { label: 'TG-канал', url: '#' },
+        ],
+        metrics: [
+          { label: 'Сессии',            value: '2 760' },
+          { label: 'Пользователи',      value: '1 980' },
+          { label: 'Регистрации в боте', value: '214', accent: 'neon' },
+          { label: 'Конверсия',         value: '11.2%' },
+        ],
+        series: [90, 110, 100, 140, 160, 150, 190, 180, 210, 205, 240, 260, 250, 290],
+        distribution: [
+          { name: 'Запуск бота', share: 34 }, { name: 'Organic', share: 28 },
+          { name: 'Telegram', share: 26 }, { name: 'Direct', share: 12 },
+        ],
+      },
+    ],
+
+    /* ══ СЛОВАРИ ОТОБРАЖЕНИЯ ══ */
+    columns: [
+      { id: 'todo',       title: 'Надо сделать' },
+      { id: 'inprogress', title: 'В процессе' },
+      { id: 'done',       title: 'Выполнено' },
+    ],
+    priorityMeta: {
+      high:   { label: 'Высокий', cls: 'bg-red-500/10 text-red-400 border-red-500/20' },
+      medium: { label: 'Средний', cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+      low:    { label: 'Низкий',  cls: 'bg-accent/10 text-accent border-accent/20' },
+    },
+    crmStatusMeta: {
+      reply:   { label: 'Ответить на коммент', cls: 'bg-accent/10 text-accent border-accent/25' },
+      dm:      { label: 'Написать в ЛС',       cls: 'bg-neon/10 text-neon border-neon/25' },
+      waiting: { label: 'Жду ответ',           cls: 'bg-amber-500/10 text-amber-400 border-amber-500/25' },
+    },
+    statusOrder: ['reply', 'dm', 'waiting'],
+    txFilters: [
+      { id: 'all',        label: 'Все' },
+      { id: 'income',     label: 'Приход' },
+      { id: 'allocation', label: 'Распределения' },
+    ],
+
+    /* ══ ИНИЦИАЛИЗАЦИЯ ══ */
+    async init() {
+      this.$nextTick(() => lucide.createIcons()); // рендер статичных иконок
+      // Автофокус на поле названия при открытии модалки
+      this.$watch('taskModal', (open) => open && this.$nextTick(() => this.$refs.taskTitle.focus()));
+      // Первичная загрузка данных из Supabase
+      await this.loadAll();
+    },
+
+    /** Загрузка/перезагрузка всех таблиц. Используется в init() и при
+        откате после неудачной оптимистичной мутации. */
+    async loadAll() {
+      this.loading = true;
+      this.loadError = '';
+      try {
+        const [env, tx, tsk, leads] = await Promise.all([
+          supabase.from('envelopes').select('*'),
+          supabase.from('transactions').select('*').order('date', { ascending: false }),
+          supabase.from('tasks').select('*'),
+          supabase.from('threads_crm').select('*').order('last_touch', { ascending: false }),
+        ]);
+        // Любая ошибка ответа → в общий catch
+        for (const r of [env, tx, tsk, leads]) if (r.error) throw r.error;
+
+        this.envelopes = (env.data || []).map(fromEnvelope);
+        this.tasks = (tsk.data || []).map(fromTask);
+        this.crm = (leads.data || []).map(fromCrm);
+        // Карта id→имя конверта, чтобы показать имя в allocation-транзакциях
+        const nameById = Object.fromEntries(this.envelopes.map((e) => [e.id, e.name]));
+        this.transactions = (tx.data || []).map((r) => fromTx(r, nameById));
+      } catch (err) {
+        this.loadError = 'Не удалось загрузить данные из Supabase. Проверь URL/ключ проекта и политики RLS.';
+        console.error('[loadAll]', err);
+      } finally {
+        this.loading = false;
+        this.$nextTick(() => lucide.createIcons());
+      }
+    },
+
+    /** Показать всплывающее уведомление (авто-скрытие через 3.5с) */
+    notify(msg, type = 'error') {
+      this.banner = { show: true, msg, type };
+      clearTimeout(this._bannerT);
+      this._bannerT = setTimeout(() => (this.banner.show = false), 3500);
+    },
+    /** Единая реакция на ошибку записи: сообщение + ресинк с БД */
+    async fail(err, msg = 'Ошибка сохранения. Данные пересинхронизированы с БД.') {
+      console.error('[supabase write]', err);
+      this.notify(msg, 'error');
+      await this.loadAll();
+    },
+
+    /* ══ ХЕЛПЕРЫ ══ */
+    money(n) { return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 }); },
+    fmtDate(iso) { return new Date(iso + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }); },
+    clean(v) { return String(v ?? '').replace(/[^\d.]/g, ''); },
+
+    /** Плавная SVG-кривая (Catmull-Rom → Bezier) по ряду значений */
+    smoothPath(series, w, h, pad = 6) {
+      const max = Math.max(...series), min = Math.min(...series);
+      const range = max - min || 1;
+      const pts = series.map((v, i) => ({
+        x: pad + i * (w - pad * 2) / (series.length - 1),
+        y: h - pad - (v - min) / range * (h - pad * 2),
+      }));
+      let d = `M ${pts[0].x},${pts[0].y}`;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const p0 = pts[Math.max(i - 1, 0)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(i + 2, pts.length - 1)];
+        d += ` C ${p1.x + (p2.x - p0.x) / 6},${p1.y + (p2.y - p0.y) / 6} ${p2.x - (p3.x - p1.x) / 6},${p2.y - (p3.y - p1.y) / 6} ${p2.x},${p2.y}`;
+      }
+      return d;
+    },
+
+    /** Ссылка задана (реальный http/https), а не заглушка '#' */
+    isLink(url) { return /^https?:\/\//.test(url || ''); },
+
+    /** Координаты точек графика для интерактивных подсказок */
+    chartPoints(series, w, h, pad = 6) {
+      const max = Math.max(...series), min = Math.min(...series);
+      const range = max - min || 1;
+      return series.map((v, i) => ({
+        x: pad + i * (w - pad * 2) / (series.length - 1),
+        y: h - pad - (v - min) / range * (h - pad * 2),
+        v,
+      }));
+    },
+
+    /* ══ ПРОИЗВОДНЫЕ ЗНАЧЕНИЯ ══ */
+    get totalBalance() { return this.envelopes.reduce((s, e) => s + e.balance, 0); },
+    get porsche() {
+      // Фолбэк, пока конверты грузятся из БД или если конверт отсутствует —
+      // защищает карточку цели от обращения к undefined.
+      return this.envelopes.find((e) => e.id === 'porsche') || { balance: 0, target: 300000 };
+    },
+    get filteredTx() { return this.transactions.filter((t) => this.txFilter === 'all' || t.type === this.txFilter); },
+
+    /* ══ ЗАДАЧИ ══ */
+    taskModal: false,
+    taskForm: { title: '', description: '', project: 'AKU Automation', priority: 'medium' },
+
+    tasksBy(status) { return this.tasks.filter((t) => t.status === status); },
+
+    async addTask() {
+      if (!this.taskForm.title.trim()) return;
+      const task = { id: uid(), status: 'todo', ...this.taskForm };
+      // Оптимистично: сразу в UI, форму чистим и закрываем модалку
+      this.tasks.unshift(task);
+      this.taskForm = { title: '', description: '', project: 'AKU Automation', priority: 'medium' };
+      this.taskModal = false;
+      // Фоновая запись; при ошибке убираем карточку и уведомляем
+      const { error } = await supabase.from('tasks').insert(toTaskRow(task));
+      if (error) {
+        this.tasks = this.tasks.filter((t) => t.id !== task.id);
+        this.fail(error, 'Не удалось создать задачу.');
+      }
+    },
+
+    async moveTask(id, dir) {
+      const order = ['todo', 'inprogress', 'done'];
+      const t = this.tasks.find((t) => t.id === id);
+      if (!t) return;
+      const idx = order.indexOf(t.status) + dir;
+      if (idx < 0 || idx >= order.length) return;
+      const prev = t.status;
+      t.status = order[idx];                       // оптимистично
+      const { error } = await supabase.from('tasks').update({ status: t.status }).eq('id', id);
+      if (error) { t.status = prev; this.fail(error, 'Не удалось переместить задачу.'); }
+    },
+
+    /* ══ БУХГАЛТЕРИЯ: распределение платежа (Вариант Б) ══ */
+    incomeAmount: '',
+    incomeNote: '',
+    alloc: {},          // { envelopeId: 'сумма' }
+    txFilter: 'all',
+
+    get amountNum() { return parseFloat(this.incomeAmount) || 0; },
+    get allocatedSum() { return this.envelopes.reduce((s, e) => s + (parseFloat(this.alloc[e.id]) || 0), 0); },
+    get remaining() { return this.amountNum - this.allocatedSum; },
+    get allocValid() { return this.amountNum > 0 && this.allocatedSum > 0 && this.remaining >= 0; },
+
+    /** Докинуть весь нераспределённый остаток в конверт одним кликом */
+    fillRemainder(id) {
+      const r = this.remaining;
+      if (r <= 0) return;
+      const current = parseFloat(this.alloc[id]) || 0;
+      this.alloc[id] = String(current + r);
+    },
+
+    async distribute() {
+      if (!this.allocValid) return;
+      const date = today();
+
+      // 1) Собираем строки транзакций (income + по одной allocation на конверт)
+      //    и целевые балансы конвертов.
+      const incomeRow = {
+        id: uid(), date, type: 'income', amount: this.amountNum,
+        note: this.incomeNote.trim() || 'Входящий платёж', envelope_id: null,
+      };
+      const txRows = [incomeRow];
+      const balanceUpdates = []; // { id, balance } — новые абсолютные балансы
+      this.envelopes.forEach((e) => {
+        const add = parseFloat(this.alloc[e.id]) || 0;
+        if (add > 0) {
+          txRows.push({
+            id: uid(), date, type: 'allocation', amount: add,
+            note: 'Распределение платежа', envelope_id: e.id,
+          });
+          balanceUpdates.push({ id: e.id, balance: e.balance + add });
+        }
+      });
+
+      // 2) Оптимистично обновляем UI: балансы + лента транзакций.
+      const nameById = Object.fromEntries(this.envelopes.map((e) => [e.id, e.name]));
+      balanceUpdates.forEach((u) => {
+        const env = this.envelopes.find((e) => e.id === u.id);
+        if (env) env.balance = u.balance;
+      });
+      this.transactions.unshift(...txRows.map((r) => fromTx(r, nameById)));
+      this.incomeAmount = '';
+      this.incomeNote = '';
+      this.alloc = {};
+
+      // 3) Пишем в БД. Внимание: без атомарной RPC это несколько запросов —
+      //    для прод-нагрузки перенеси в Postgres-функцию (RPC), чтобы insert
+      //    транзакций и update балансов выполнялись одной транзакцией.
+      try {
+        const insRes = await supabase.from('transactions').insert(txRows);
+        if (insRes.error) throw insRes.error;
+        const results = await Promise.all(
+          balanceUpdates.map((u) => supabase.from('envelopes').update({ balance: u.balance }).eq('id', u.id)),
+        );
+        for (const r of results) if (r.error) throw r.error;
+      } catch (err) {
+        // Полный откат до состояния БД — надёжнее ручной инверсии многих записей.
+        this.fail(err, 'Не удалось распределить платёж. Состояние восстановлено из БД.');
+      }
+    },
+
+    /* ══ THREADS CRM ══ */
+    crmFormOpen: false,
+    crmForm: { nickname: '', profileUrl: '', postUrl: '', status: 'reply', notes: '' },
+
+    async addCrm() {
+      if (!this.crmForm.nickname.trim()) return;
+      const lead = { id: uid(), lastTouch: today(), ...this.crmForm };
+      this.crm.unshift(lead);                       // оптимистично
+      this.crmForm = { nickname: '', profileUrl: '', postUrl: '', status: 'reply', notes: '' };
+      this.crmFormOpen = false;
+      const { error } = await supabase.from('threads_crm').insert(toCrmRow(lead));
+      if (error) {
+        this.crm = this.crm.filter((c) => c.id !== lead.id);
+        this.fail(error, 'Не удалось добавить лид.');
+      }
+    },
+
+    /** Быстрая смена статуса по циклу: reply → dm → waiting → reply */
+    async cycleStatus(id) {
+      const e = this.crm.find((e) => e.id === id);
+      if (!e) return;
+      const prevStatus = e.status, prevTouch = e.lastTouch;
+      e.status = this.statusOrder[(this.statusOrder.indexOf(e.status) + 1) % this.statusOrder.length];
+      e.lastTouch = today();                        // оптимистично
+      const { error } = await supabase.from('threads_crm')
+        .update({ status: e.status, last_touch: e.lastTouch }).eq('id', id);
+      if (error) {
+        e.status = prevStatus; e.lastTouch = prevTouch;
+        this.fail(error, 'Не удалось сменить статус лида.');
+      }
+    },
+  }));
+});
 </script>
+
 </body>
 </html>
