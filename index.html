@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AKU Command Center</title>
+
+<!-- ══ Tailwind CSS (CDN) + конфиг палитры Premium Dark Minimalist ══ -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          base:   '#0b0f19', // фон
+          panel:  '#111827', // карточки / сайдбар
+          edge:   '#1f2937', // границы
+          accent: '#3b82f6', // глубокий синий
+          neon:   '#10b981', // неоновый зелёный (финансы)
+          muted:  '#9ca3af', // приглушённый текст
+        },
+        fontFamily: {
+          display: ['Space Grotesk', 'sans-serif'],
+          body:    ['Inter', 'sans-serif'],
+        },
+      },
+    },
+  };
+</script>
+
+<!-- ══ Шрифты бренда ══ -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<!-- ══ Lucide Icons (динамический рендеринг) ══ -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<!-- ══ Supabase JS SDK (грузим до Alpine, чтобы window.supabase был готов) ══ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- ══ Alpine.js ══ -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+<style>
+  [x-cloak] { display: none !important; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 8px; }
+  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+</style>
+</head>
+
+<body class="bg-base font-body text-gray-200 antialiased">
+
+<div x-data="commandCenter" x-cloak class="flex min-h-screen">
+
+  <!-- ═══════════════ САЙДБАР (иконки на мобиле, полный на lg) ═══════════════ -->
+  <aside class="sticky top-0 flex h-screen w-16 shrink-0 flex-col border-r border-edge bg-panel lg:w-60">
+    <div class="flex items-center gap-3 px-4 py-6 lg:px-6">
+      <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-accent font-display text-sm font-bold text-white shadow-[0_0_20px_#3b82f680]">A</div>
+      <div class="hidden lg:block">
+        <p class="font-display text-sm font-semibold tracking-wide text-white">AKU</p>
+        <p class="text-[11px] uppercase tracking-widest text-muted">Command Center</p>
+      </div>
+    </div>
+
+    <nav class="mt-2 flex flex-1 flex-col gap-1 px-2 lg:px-3">
+      <template x-for="item in nav" :key="item.id">
+        <button @click="setTab(item.id)"
+          class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all"
+          :class="tab === item.id
+            ? 'bg-accent/10 text-accent shadow-[inset_0_0_0_1px_#3b82f640]'
+            : 'text-muted hover:bg-white/5 hover:text-gray-200'">
+          <i :data-lucide="item.icon" class="h-[19px] w-[19px] shrink-0"></i>
+          <span class="hidden lg:inline" x-text="item.label"></span>
+        </button>
+      </template>
+    </nav>
+
+    <div class="hidden border-t border-edge px-6 py-4 lg:block">
+      <p class="text-xs text-muted">v1 · прототип</p>
+      <p class="text-xs text-muted/60">Supabase — шаг 2</p>
+    </div>
+  </aside>
+
+  <!-- ═══════════════ КОНТЕНТ ═══════════════ -->
+  <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10">
+
+    <!-- Индикатор первичной загрузки из Supabase -->
+    <div x-show="loading" x-transition.opacity
+         class="mb-6 flex items-center gap-3 rounded-2xl border border-edge bg-panel px-5 py-3.5 text-sm text-muted">
+      <span class="h-4 w-4 animate-spin rounded-full border-2 border-edge border-t-accent"></span>
+      Загрузка данных из Supabase…
+    </div>
+
+    <!-- Баннер ошибки соединения с БД -->
+    <div x-show="loadError" x-transition.opacity
+         class="mb-6 flex items-start justify-between gap-3 rounded-2xl border border-red-500/25 bg-red-500/10 px-5 py-3.5 text-sm text-red-300">
+      <span x-text="loadError"></span>
+      <button @click="loadAll()" class="shrink-0 rounded-lg border border-red-500/30 px-3 py-1 text-xs font-medium text-red-200 transition-colors hover:bg-red-500/15">Повторить</button>
+    </div>
+
+
+    <!-- ─────────── 1. ОБЗОР ─────────── -->
+    <section x-show="tab === 'dashboard'" x-transition:enter.opacity.duration.300ms class="space-y-6">
+
+      <!-- Живой счётчик аудитории -->
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl border border-edge bg-panel px-5 py-3.5">
+        <span class="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted">
+          <span class="relative flex h-2 w-2">
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-neon opacity-60"></span>
+            <span class="relative inline-flex h-2 w-2 rounded-full bg-neon"></span>
+          </span>
+          Аудитория
+        </span>
+        <template x-for="s in audience" :key="s.id">
+          <div class="flex items-baseline gap-1.5">
+            <span class="text-xs text-muted" x-text="s.label"></span>
+            <span class="font-display text-sm font-semibold"
+              :style="`color:${s.accent === 'green' ? '#10b981' : '#3b82f6'}; text-shadow:0 0 14px ${s.accent === 'green' ? '#10b98166' : '#3b82f666'}`"
+              x-text="s.value"></span>
+          </div>
+        </template>
+      </div>
+
+      <div class="grid gap-6 xl:grid-cols-3">
+        <!-- Карточка цели Porsche -->
+        <div class="relative overflow-hidden rounded-2xl border border-edge bg-panel p-6 xl:col-span-2">
+          <div class="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full opacity-20 blur-3xl"
+               style="background: radial-gradient(circle, #10b981, transparent 70%)"></div>
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-xs font-medium uppercase tracking-widest text-muted">Главная цель</p>
+              <h3 class="mt-1 font-display text-2xl font-bold tracking-tight text-white">Porsche 911 Turbo S</h3>
+            </div>
+            <div class="flex h-11 w-11 items-center justify-center rounded-xl border border-neon/25 bg-neon/10 text-neon">
+              <i data-lucide="car" class="h-[22px] w-[22px]"></i>
+            </div>
+          </div>
+          <div class="mt-6 flex items-end justify-between">
+            <p class="font-display text-3xl font-bold text-neon" style="text-shadow:0 0 24px #10b98155" x-text="money(porsche.balance)"></p>
+            <p class="text-sm text-muted">
+              из <span x-text="money(porsche.target)"></span> ·
+              <span class="text-white" x-text="Math.round(porsche.balance / porsche.target * 100) + '%'"></span>
+            </p>
+          </div>
+          <div class="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-edge">
+            <div class="h-full rounded-full transition-all duration-700"
+                 :style="`width:${Math.min(porsche.balance / porsche.target * 100, 100)}%; background:linear-gradient(90deg,#10b98199,#10b981); box-shadow:0 0 12px #10b98166`"></div>
+          </div>
+          <p class="mt-3 text-sm text-muted">
+            Осталось накопить:
+            <span class="font-medium text-white" x-text="money(porsche.target - porsche.balance)"></span>
+          </p>
+        </div>
+
+        <!-- Быстрый баланс -->
+        <div class="flex flex-col justify-between rounded-2xl border border-edge bg-panel p-6">
+          <div>
+            <p class="text-xs font-medium uppercase tracking-widest text-muted">Все счета</p>
+            <p class="mt-2 font-display text-3xl font-bold text-white" x-text="money(totalBalance)"></p>
+            <p class="mt-1 text-sm text-muted"><span x-text="envelopes.length"></span> конвертов</p>
+          </div>
+          <button @click="setTab('finance')"
+            class="mt-5 flex items-center justify-center gap-2 rounded-xl bg-neon px-4 py-2.5 text-sm font-semibold text-base transition-all hover:brightness-110 hover:shadow-[0_0_24px_#10b98155]">
+            <i data-lucide="plus" class="h-4 w-4"></i> Добавить транзакцию
+          </button>
+        </div>
+      </div>
+
+      <div class="grid gap-6 xl:grid-cols-2">
+        <!-- Виджет последних транзакций -->
+        <div class="rounded-2xl border border-edge bg-panel p-6">
+          <div class="mb-4 flex items-center justify-between">
+            <h3 class="font-display text-base font-semibold text-white">Последние транзакции</h3>
+            <button @click="setTab('finance')" class="text-sm text-accent hover:underline">Бухгалтерия →</button>
+          </div>
+          <div class="divide-y divide-edge">
+            <template x-for="t in transactions.slice(0, 4)" :key="t.id">
+              <div class="flex items-center gap-4 py-3">
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border"
+                     :class="t.type === 'income' ? 'border-neon/20 bg-neon/10 text-neon' : 'border-accent/20 bg-accent/10 text-accent'">
+                  <!-- инлайн-SVG: элементы создаются Alpine динамически -->
+                  <svg x-show="t.type === 'income'" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 7 10 10"/><path d="M17 7v10H7"/></svg>
+                  <svg x-show="t.type !== 'income'" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-medium text-white" x-text="t.type === 'income' ? t.note : '→ ' + t.envelopeName"></p>
+                  <p class="text-xs text-muted" x-text="fmtDate(t.date)"></p>
+                </div>
+                <span class="font-display text-sm font-semibold" :class="t.type === 'income' ? 'text-neon' : 'text-gray-300'"
+                      x-text="(t.type === 'income' ? '+' : '') + money(t.amount)"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Виджет Threads CRM -->
+        <div class="rounded-2xl border border-edge bg-panel p-6">
+          <div class="mb-4 flex items-center justify-between">
+            <h3 class="font-display text-base font-semibold text-white">Threads CRM · требует действий</h3>
+            <button @click="setTab('crm')" class="text-sm text-accent hover:underline">Все записи →</button>
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <template x-for="e in crm.slice(0, 4)" :key="e.id">
+              <div class="rounded-xl border border-edge bg-base p-4">
+                <div class="flex items-center justify-between">
+                  <span class="font-medium text-white" x-text="e.nickname"></span>
+                  <span class="text-xs text-muted" x-text="fmtDate(e.lastTouch)"></span>
+                </div>
+                <span class="mt-2 inline-block rounded-full border px-2.5 py-0.5 text-[11px] font-medium"
+                      :class="crmStatusMeta[e.status].cls" x-text="crmStatusMeta[e.status].label"></span>
+                <p class="mt-2 line-clamp-2 text-xs text-muted" x-text="e.notes"></p>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────── 2. ЗАДАЧИ (КАНБАН) ─────────── -->
+    <section x-show="tab === 'tasks'" x-transition:enter.opacity.duration.300ms>
+      <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 class="font-display text-xl font-semibold tracking-tight text-white">Задачи</h2>
+          <p class="mt-1 text-sm text-muted">Кнопки ‹ › на карточке перемещают задачу между колонками</p>
+        </div>
+        <button @click="taskModal = true"
+          class="flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-all hover:brightness-110 hover:shadow-[0_0_24px_#3b82f655]">
+          <i data-lucide="plus" class="h-4 w-4"></i> Добавить задачу
+        </button>
+      </div>
+
+      <div class="grid gap-5 lg:grid-cols-3">
+        <template x-for="col in columns" :key="col.id">
+          <div class="rounded-2xl border border-edge bg-panel/60 p-4">
+            <div class="mb-4 flex items-center justify-between px-1">
+              <h3 class="font-display text-sm font-semibold uppercase tracking-widest text-muted" x-text="col.title"></h3>
+              <span class="rounded-full bg-edge px-2.5 py-0.5 text-xs text-muted" x-text="tasksBy(col.id).length"></span>
+            </div>
+            <div class="space-y-3">
+              <template x-for="t in tasksBy(col.id)" :key="t.id">
+                <div class="group rounded-xl border border-edge bg-panel p-4 transition-colors hover:border-accent/40">
+                  <div class="flex items-start justify-between gap-2">
+                    <p class="font-medium text-white" :class="t.status === 'done' && 'line-through opacity-50'" x-text="t.title"></p>
+                    <div class="flex shrink-0 gap-1 opacity-40 transition-opacity group-hover:opacity-100">
+                      <button @click="moveTask(t.id, -1)" :disabled="t.status === 'todo'" aria-label="Переместить назад"
+                        class="rounded-lg border border-edge p-1 text-muted hover:text-white disabled:opacity-30">
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                      </button>
+                      <button @click="moveTask(t.id, 1)" :disabled="t.status === 'done'" aria-label="Переместить вперёд"
+                        class="rounded-lg border border-edge p-1 text-muted hover:text-white disabled:opacity-30">
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <p class="mt-1.5 text-sm text-muted" x-text="t.description"></p>
+                  <div class="mt-3 flex flex-wrap items-center gap-2">
+                    <span class="rounded-full border border-edge bg-base px-2.5 py-0.5 text-[11px] font-medium text-gray-300" x-text="t.project"></span>
+                    <span class="rounded-full border px-2.5 py-0.5 text-[11px] font-medium"
+                          :class="priorityMeta[t.priority].cls" x-text="priorityMeta[t.priority].label"></span>
+                  </div>
+                </div>
+              </template>
+              <p x-show="tasksBy(col.id).length === 0"
+                 class="rounded-xl border border-dashed border-edge py-8 text-center text-sm text-muted/60">
+                Пусто — перенеси сюда задачу
+              </p>
+            </div>
+          </div>
+        </template>
+      </div>
+    </section>
+
+    <!-- ─────────── 3. БУХГАЛТЕРИЯ ─────────── -->
+    <section x-show="tab === 'finance'" x-transition:enter.opacity.duration.300ms class="space-y-6">
+      <div>
+        <h2 class="font-display text-xl font-semibold tracking-tight text-white">Бухгалтерия</h2>
+        <p class="mt-1 text-sm text-muted">Система конвертов: платёж → ручное распределение по счетам</p>
+      </div>
+
+      <!-- Конверты -->
+      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <template x-for="e in envelopes" :key="e.id">
+          <div class="rounded-2xl border border-edge bg-panel p-5">
+            <div class="flex items-center justify-between">
+              <div class="flex h-9 w-9 items-center justify-center rounded-lg border border-neon/20 bg-neon/10 text-neon" x-html="e.icon"></div>
+              <span x-show="e.target" class="text-[11px] text-muted" x-text="Math.round(e.balance / (e.target || 1) * 100) + '%'"></span>
+            </div>
+            <p class="mt-3 text-xs text-muted" x-text="e.name"></p>
+            <p class="mt-1 font-display text-lg font-bold text-white" x-text="money(e.balance)"></p>
+            <div x-show="e.target" class="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-edge">
+              <div class="h-full rounded-full transition-all duration-700"
+                   :style="`width:${Math.min(e.balance / (e.target || 1) * 100, 100)}%; background:linear-gradient(90deg,#10b98199,#10b981); box-shadow:0 0 12px #10b98166`"></div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <div class="grid gap-6 xl:grid-cols-5">
+        <!-- Форма внесения и распределения (Вариант Б) -->
+        <div class="rounded-2xl border border-edge bg-panel p-6 xl:col-span-2">
+          <h3 class="font-display text-base font-semibold text-white">Внести платёж</h3>
+          <p class="mt-1 text-sm text-muted">Укажи сумму и распредели её по конвертам вручную.</p>
+
+          <label class="mt-5 block text-xs font-medium uppercase tracking-widest text-muted">Сумма платежа, $</label>
+          <input x-model="incomeAmount" @input="incomeAmount = clean(incomeAmount)" placeholder="1000" inputmode="decimal"
+            class="mt-1.5 w-full rounded-xl border border-edge bg-base px-4 py-3 font-display text-xl font-semibold text-white outline-none transition-colors placeholder:text-muted/40 focus:border-neon" />
+          <input x-model="incomeNote" placeholder="Комментарий (клиент, услуга…)"
+            class="mt-2 w-full rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none placeholder:text-muted/40 focus:border-accent" />
+
+          <div class="mt-5 space-y-3">
+            <template x-for="e in envelopes" :key="e.id">
+              <div class="flex items-center gap-3">
+                <span class="w-1/2 truncate text-sm text-muted" x-text="e.name"></span>
+                <input x-model="alloc[e.id]" @input="alloc[e.id] = clean(alloc[e.id])" placeholder="0" inputmode="decimal"
+                  class="w-24 rounded-lg border border-edge bg-base px-3 py-1.5 text-right text-sm text-white outline-none focus:border-neon" />
+                <button @click="fillRemainder(e.id)" title="Добавить весь остаток в этот конверт"
+                  class="rounded-lg border border-edge px-2 py-1.5 text-[11px] text-muted transition-colors hover:border-neon/40 hover:text-neon">
+                  остаток
+                </button>
+              </div>
+            </template>
+          </div>
+
+          <!-- Валидация -->
+          <div class="mt-5 flex items-center justify-between rounded-xl border border-edge bg-base px-4 py-3 text-sm">
+            <span class="text-muted">Не распределено</span>
+            <span class="font-display font-semibold" :class="remaining < 0 ? 'text-red-400' : 'text-neon'" x-text="money(remaining)"></span>
+          </div>
+          <p x-show="remaining < 0" class="mt-2 text-xs text-red-400">Сумма по конвертам больше платежа — уменьши значения.</p>
+
+          <button @click="distribute()" :disabled="!allocValid"
+            class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-neon px-4 py-3 text-sm font-semibold text-base transition-all hover:brightness-110 hover:shadow-[0_0_24px_#10b98155] disabled:cursor-not-allowed disabled:opacity-40">
+            <i data-lucide="check" class="h-4 w-4"></i> Распределить
+          </button>
+        </div>
+
+        <!-- Транзакции с фильтром -->
+        <div class="rounded-2xl border border-edge bg-panel p-6 xl:col-span-3">
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h3 class="font-display text-base font-semibold text-white">Последние транзакции</h3>
+            <div class="flex items-center gap-1 rounded-xl border border-edge bg-base p-1">
+              <template x-for="f in txFilters" :key="f.id">
+                <button @click="txFilter = f.id"
+                  class="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                  :class="txFilter === f.id ? 'bg-accent/15 text-accent' : 'text-muted hover:text-white'"
+                  x-text="f.label"></button>
+              </template>
+            </div>
+          </div>
+
+          <div class="divide-y divide-edge">
+            <template x-for="t in filteredTx" :key="t.id">
+              <div class="flex items-center gap-4 py-3.5">
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border"
+                     :class="t.type === 'income' ? 'border-neon/20 bg-neon/10 text-neon' : 'border-accent/20 bg-accent/10 text-accent'">
+                  <svg x-show="t.type === 'income'" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 7 10 10"/><path d="M17 7v10H7"/></svg>
+                  <svg x-show="t.type !== 'income'" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-medium text-white" x-text="t.type === 'income' ? t.note : '→ ' + t.envelopeName"></p>
+                  <p class="text-xs text-muted" x-text="fmtDate(t.date) + (t.type === 'allocation' ? ' · ' + t.note : '')"></p>
+                </div>
+                <span class="font-display text-sm font-semibold" :class="t.type === 'income' ? 'text-neon' : 'text-gray-300'"
+                      x-text="(t.type === 'income' ? '+' : '') + money(t.amount)"></span>
+              </div>
+            </template>
+            <p x-show="filteredTx.length === 0" class="py-10 text-center text-sm text-muted/60">Транзакций по фильтру нет</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────── 4. THREADS CRM ─────────── -->
+    <section x-show="tab === 'crm'" x-transition:enter.opacity.duration.300ms>
+      <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 class="font-display text-xl font-semibold tracking-tight text-white">Threads CRM</h2>
+          <p class="mt-1 text-sm text-muted">Клик по статусу переключает его по циклу и обновляет дату касания</p>
+        </div>
+        <button @click="crmFormOpen = !crmFormOpen"
+          class="flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-all hover:brightness-110 hover:shadow-[0_0_24px_#3b82f655]">
+          <span x-text="crmFormOpen ? '✕ Закрыть' : '+ Новая запись'"></span>
+        </button>
+      </div>
+
+      <!-- Инлайн-форма добавления -->
+      <div x-show="crmFormOpen" x-transition
+           class="mb-5 grid gap-3 rounded-2xl border border-edge bg-panel p-5 sm:grid-cols-2 lg:grid-cols-5">
+        <input x-model="crmForm.nickname" placeholder="@nickname"
+          class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-muted/40 focus:border-accent" />
+        <input x-model="crmForm.profileUrl" placeholder="Ссылка на профиль"
+          class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-muted/40 focus:border-accent" />
+        <input x-model="crmForm.postUrl" placeholder="Ссылка на пост/коммент"
+          class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-muted/40 focus:border-accent" />
+        <select x-model="crmForm.status"
+          class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none focus:border-accent">
+          <template x-for="s in statusOrder" :key="s">
+            <option :value="s" x-text="crmStatusMeta[s].label"></option>
+          </template>
+        </select>
+        <input x-model="crmForm.notes" placeholder="Заметка"
+          class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-muted/40 focus:border-accent lg:col-span-4" />
+        <button @click="addCrm()"
+          class="rounded-xl bg-neon px-4 py-2.5 text-sm font-semibold text-base transition-all hover:brightness-110">
+          Сохранить
+        </button>
+      </div>
+
+      <!-- Таблица -->
+      <div class="overflow-x-auto rounded-2xl border border-edge bg-panel">
+        <table class="w-full min-w-[760px] text-left text-sm">
+          <thead>
+            <tr class="border-b border-edge text-xs uppercase tracking-widest text-muted">
+              <th class="px-5 py-3.5 font-medium">Никнейм</th>
+              <th class="px-5 py-3.5 font-medium">Пост</th>
+              <th class="px-5 py-3.5 font-medium">Статус</th>
+              <th class="px-5 py-3.5 font-medium">Касание</th>
+              <th class="px-5 py-3.5 font-medium">Заметки</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-edge">
+            <template x-for="e in crm" :key="e.id">
+              <tr class="transition-colors hover:bg-white/[0.02]">
+                <td class="px-5 py-3.5">
+                  <a :href="e.profileUrl" target="_blank" rel="noreferrer" class="font-medium text-accent hover:underline" x-text="e.nickname"></a>
+                </td>
+                <td class="px-5 py-3.5">
+                  <a :href="e.postUrl" target="_blank" rel="noreferrer" class="inline-flex items-center gap-1 text-muted hover:text-white">
+                    Открыть
+                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+                  </a>
+                </td>
+                <td class="px-5 py-3.5">
+                  <button @click="cycleStatus(e.id)" title="Сменить статус"
+                    class="rounded-full border px-3 py-1 text-[11px] font-medium transition-transform active:scale-95"
+                    :class="crmStatusMeta[e.status].cls" x-text="crmStatusMeta[e.status].label"></button>
+                </td>
+                <td class="px-5 py-3.5 text-muted" x-text="fmtDate(e.lastTouch)"></td>
+                <td class="max-w-[280px] px-5 py-3.5 text-muted" x-text="e.notes"></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ─────────── 5. GA4 АНАЛИТИКА (заглушка под Data API) ─────────── -->
+    <section x-show="tab === 'analytics'" x-transition:enter.opacity.duration.300ms class="space-y-6">
+      <div>
+        <h2 class="font-display text-xl font-semibold tracking-tight text-white">GA4 Аналитика</h2>
+        <p class="mt-1 text-sm text-muted">Мониторинг экосистемы AKU · демо-данные. Шаг 2: Google Analytics Data API + API площадок</p>
+      </div>
+
+      <template x-for="site in analytics" :key="site.id">
+        <div class="rounded-2xl border border-edge bg-panel p-6">
+          <!-- Шапка проекта: название, тип, кнопки быстрой навигации -->
+          <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="h-2.5 w-2.5 rounded-full" :style="`background:${site.color}; box-shadow:0 0 10px ${site.color}`"></span>
+                <h3 class="font-display text-lg font-semibold text-white" x-text="site.name"></h3>
+              </div>
+              <p class="mt-1 text-xs text-muted" x-text="site.kindLabel"></p>
+            </div>
+            <!-- Быстрые ссылки на реальные ресурсы -->
+            <div class="flex flex-wrap items-center gap-2">
+              <template x-for="r in site.resources" :key="r.label">
+                <a :href="isLink(r.url) ? r.url : '#'"
+                   :target="isLink(r.url) ? '_blank' : '_self'" rel="noreferrer"
+                   @click="!isLink(r.url) && $event.preventDefault()"
+                   :title="isLink(r.url) ? r.url : 'Ссылка не задана'"
+                   class="group inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors"
+                   :class="isLink(r.url)
+                     ? 'border-edge bg-base text-gray-300 hover:border-accent/40 hover:text-accent'
+                     : 'border-edge bg-base text-muted/50 cursor-default'">
+                  <span x-text="r.label"></span>
+                  <svg class="h-3 w-3 opacity-60 transition-opacity group-hover:opacity-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+                </a>
+              </template>
+            </div>
+          </div>
+
+          <div class="grid gap-6 lg:grid-cols-3">
+            <!-- Метрики: просмотры / подписчики / сессии / конверсии -->
+            <div class="grid grid-cols-2 gap-3 lg:grid-cols-1">
+              <template x-for="m in site.metrics" :key="m.label">
+                <div class="rounded-xl border border-edge bg-base p-4">
+                  <p class="text-xs text-muted" x-text="m.label"></p>
+                  <p class="mt-1.5 font-display text-xl font-bold" :class="m.accent === 'neon' ? 'text-neon' : 'text-white'" x-text="m.value"></p>
+                </div>
+              </template>
+            </div>
+
+            <!-- Интерактивный мини-график (плавная кривая + точки с подсказками) -->
+            <div class="rounded-xl border border-edge bg-base p-4">
+              <div class="mb-2 flex items-center justify-between">
+                <p class="text-xs text-muted" x-text="site.seriesLabel"></p>
+                <p class="text-xs font-medium" :style="`color:${site.color}`" x-text="'↑ ' + site.series[site.series.length - 1]"></p>
+              </div>
+              <svg viewBox="0 0 300 120" class="w-full" preserveAspectRatio="none" role="img" :aria-label="site.seriesLabel + ': ' + site.name">
+                <defs>
+                  <linearGradient :id="'fill-' + site.id" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" :stop-color="site.color" stop-opacity="0.35"/>
+                    <stop offset="100%" :stop-color="site.color" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path :d="smoothPath(site.series, 300, 120) + ' L 294,114 L 6,114 Z'" :fill="'url(#fill-' + site.id + ')'" stroke="none"/>
+                <path :d="smoothPath(site.series, 300, 120)" fill="none" :stroke="site.color" stroke-width="2.5"
+                      stroke-linecap="round" :style="`filter: drop-shadow(0 0 6px ${site.color}80)`"/>
+                <!-- Интерактивные точки: наведение показывает значение дня -->
+                <template x-for="(p, i) in chartPoints(site.series, 300, 120)" :key="i">
+                  <g class="group">
+                    <circle :cx="p.x" :cy="p.y" r="2.5" :fill="site.color"/>
+                    <circle :cx="p.x" :cy="p.y" r="9" fill="transparent" class="cursor-pointer">
+                      <title x-text="'День ' + (i + 1) + ': ' + p.v"></title>
+                    </circle>
+                  </g>
+                </template>
+              </svg>
+            </div>
+
+            <!-- Прогресс-бары: источники трафика / распределение аудитории -->
+            <div class="rounded-xl border border-edge bg-base p-4">
+              <p class="mb-3 text-xs text-muted" x-text="site.distLabel"></p>
+              <div class="space-y-3">
+                <template x-for="d in site.distribution" :key="d.name">
+                  <div>
+                    <div class="mb-1 flex justify-between text-xs">
+                      <span class="text-gray-300" x-text="d.name"></span>
+                      <span class="text-muted" x-text="d.share + '%'"></span>
+                    </div>
+                    <div class="h-2.5 w-full overflow-hidden rounded-full bg-edge">
+                      <div class="h-full rounded-full transition-all duration-700"
+                           :style="`width:${d.share}%; background:linear-gradient(90deg,${site.color}99,${site.color}); box-shadow:0 0 12px ${site.color}66`"></div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </section>
+  </main>
+
+  <!-- ═══════════════ МОДАЛКА: НОВАЯ ЗАДАЧА ═══════════════ -->
+  <div x-show="taskModal" @click.self="taskModal = false" @keydown.escape.window="taskModal = false"
+       x-transition:enter.opacity.duration.200ms x-transition:leave.opacity.duration.150ms
+       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+    <div x-show="taskModal" x-transition:enter="transition duration-200 ease-out"
+         x-transition:enter-start="scale-95 opacity-0" x-transition:enter-end="scale-100 opacity-100"
+         class="w-full max-w-md rounded-2xl border border-edge bg-panel p-6 shadow-2xl">
+      <div class="mb-5 flex items-center justify-between">
+        <h3 class="font-display text-lg font-semibold text-white">Новая задача</h3>
+        <button @click="taskModal = false" class="text-muted hover:text-white" aria-label="Закрыть">
+          <i data-lucide="x" class="h-[18px] w-[18px]"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <input x-model="taskForm.title" x-ref="taskTitle" placeholder="Название задачи"
+          class="w-full rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none placeholder:text-muted/40 focus:border-accent" />
+        <textarea x-model="taskForm.description" placeholder="Описание" rows="3"
+          class="w-full resize-none rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none placeholder:text-muted/40 focus:border-accent"></textarea>
+        <div class="grid grid-cols-2 gap-3">
+          <input x-model="taskForm.project" placeholder="Проект"
+            class="rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none focus:border-accent" />
+          <select x-model="taskForm.priority"
+            class="rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none focus:border-accent">
+            <option value="high">Высокий</option>
+            <option value="medium">Средний</option>
+            <option value="low">Низкий</option>
+          </select>
+        </div>
+      </div>
+
+      <button @click="addTask()" :disabled="!taskForm.title.trim()"
+        class="mt-5 w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40">
+        Создать задачу
+      </button>
+    </div>
+  </div>
+
+  <!-- Всплывающее уведомление о фоновых операциях (внутри x-data) -->
+  <div x-show="banner.show" x-transition x-cloak
+       class="fixed bottom-5 left-1/2 z-[60] -translate-x-1/2 rounded-xl border px-4 py-2.5 text-sm shadow-2xl backdrop-blur"
+       :class="banner.type === 'error'
+         ? 'border-red-500/30 bg-red-500/15 text-red-200'
+         : 'border-neon/30 bg-neon/15 text-neon'"
+       x-text="banner.msg"></div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     ЛОГИКА ALPINE.JS — весь стейт и методы Command Center.
+     SUPABASE (шаг 2): моки ниже заменяются на supabase-js (CDN),
+     точки интеграции помечены комментарием «SUPABASE:».
+     ═══════════════════════════════════════════════════════════════════ -->
+<script>
+document.addEventListener('alpine:init', () => {
+  /* ── Инлайн-иконки Lucide для конвертов (рендер через x-html,
+        т.к. элементы в x-for создаются динамически) ── */
+  const svg = (paths) =>
+    `<svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+
+  const ICONS = {
+    utensils: svg('<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>'),
+    trending: svg('<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>'),
+    shield:   svg('<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>'),
+    car:      svg('<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>'),
+    briefcase: svg('<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>'),
+  };
+
+  const uid = () => Math.random().toString(36).slice(2, 10);
+  const today = () => new Date().toISOString().slice(0, 10);
+
+  /* ══════════════════════════════════════════════════════════════════
+     SUPABASE
+     Публикуемый (anon) ключ безопасно держать в клиентском коде — он и
+     задуман публичным и защищён политиками RLS на стороне БД. Так как
+     файл уедет на публичный GitHub Pages, ОБЯЗАТЕЛЬНО включи Row Level
+     Security на всех таблицах, иначе данные будут доступны любому.
+     ══════════════════════════════════════════════════════════════════ */
+  const SUPABASE_URL = 'https://dv-eyi-nV0gr1cwits7C1w.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_dv-eyi-nV0gr1cwits7C1w_0Y74LxLO';
+  // window.supabase — глобал из UMD-сборки SDK; .createClient создаёт инстанс.
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  /* Нормализация имени иконки из БД (icon_name) к ключам карты ICONS */
+  const ICON_ALIASES = {
+    'trending-up': 'trending', 'shield-check': 'shield',
+    utensils: 'utensils', trending: 'trending', shield: 'shield', car: 'car', briefcase: 'briefcase',
+  };
+  const iconFor = (name) => ICONS[ICON_ALIASES[name] || name] || ICONS.briefcase;
+
+  /* ── Мапперы: строка БД (snake_case) → форма приложения (camelCase) ── */
+  const fromEnvelope = (r) => ({
+    id: r.id, name: r.name, balance: Number(r.balance) || 0,
+    iconName: r.icon_name, icon: iconFor(r.icon_name),
+    target: r.target != null ? Number(r.target) : undefined,
+  });
+  const fromTask = (r) => ({
+    id: r.id, title: r.title, description: r.description,
+    project: r.project, priority: r.priority, status: r.status,
+  });
+  const fromCrm = (r) => ({
+    id: r.id, nickname: r.nickname, profileUrl: r.profile_url, postUrl: r.post_url,
+    status: r.status, lastTouch: r.last_touch, notes: r.notes,
+  });
+  /* Транзакция: envelope_id → отображаемое имя конверта (по карте id→name) */
+  const fromTx = (r, nameById) => ({
+    id: r.id, date: r.date, type: r.type, amount: Number(r.amount) || 0,
+    note: r.note, envelopeId: r.envelope_id || null,
+    envelopeName: r.envelope_id ? (nameById[r.envelope_id] || '—') : undefined,
+  });
+  /* ── Мапперы: форма приложения → строка БД для записи ── */
+  const toTaskRow = (t) => ({
+    id: t.id, title: t.title, description: t.description,
+    project: t.project, priority: t.priority, status: t.status,
+  });
+  const toCrmRow = (c) => ({
+    id: c.id, nickname: c.nickname, profile_url: c.profileUrl, post_url: c.postUrl,
+    status: c.status, last_touch: c.lastTouch, notes: c.notes,
+  });
+
+  /* ── НАЧАЛЬНЫЕ ДАННЫЕ (моки) ──
+     SUPABASE: заменить на select из таблиц tasks / envelopes /
+     transactions / threads_crm / social_stats в init(). */
+
+  const INITIAL_TASKS = [
+    { id: 't1', title: 'Финализировать оффер на лендинге', description: 'Переписать первый экран под боль «теряете заявки ночью».', project: 'AKU Automation', priority: 'high',   status: 'todo' },
+    { id: 't2', title: 'Каталог авто: фильтр по цене',      description: 'Добавить диапазонный слайдер и сортировку.',                project: 'StolitsaAvto',   priority: 'medium', status: 'todo' },
+    { id: 't3', title: 'Скрипт прогрева в Threads',         description: '10 комментариев в день по нише, вести в CRM.',              project: 'AKU Media',      priority: 'high',   status: 'inprogress' },
+    { id: 't4', title: 'Настроить GA4 на сайте отца',       description: 'Поток данных + события кликов по телефону.',                project: 'Сайт-визитка',   priority: 'low',    status: 'done' },
+  ];
+
+  const INITIAL_ENVELOPES = [
+    { id: 'life',    name: 'Жизнь / Еда',           balance: 1850,  icon: ICONS.utensils },
+    { id: 'invest',  name: 'Инвестиции',            balance: 6200,  icon: ICONS.trending },
+    { id: 'safety',  name: 'Подушка безопасности',  balance: 4400,  icon: ICONS.shield },
+    { id: 'porsche', name: 'Фонд Porsche 911',      balance: 45000, icon: ICONS.car, target: 300000 },
+    { id: 'biz',     name: 'Оборот бизнеса',        balance: 9300,  icon: ICONS.briefcase },
+  ];
+
+  const INITIAL_TRANSACTIONS = [
+    { id: 'x1', date: '2026-07-14', type: 'income',     amount: 1200, note: 'Оплата: бот для автосалона' },
+    { id: 'x2', date: '2026-07-14', type: 'allocation', amount: 600,  envelopeName: 'Фонд Porsche 911', note: 'Распределение платежа' },
+    { id: 'x3', date: '2026-07-14', type: 'allocation', amount: 400,  envelopeName: 'Оборот бизнеса',   note: 'Распределение платежа' },
+    { id: 'x4', date: '2026-07-12', type: 'income',     amount: 800,  note: 'Консультация по интеграции ИИ' },
+  ];
+
+  const INITIAL_CRM = [
+    { id: 'c1', nickname: '@dmitry_ecom',    profileUrl: 'https://www.threads.net/@dmitry_ecom',    postUrl: 'https://www.threads.net/post/1', status: 'reply',   lastTouch: '2026-07-15', notes: 'Спросил про цену бота — дать вилку и кейс.' },
+    { id: 'c2', nickname: '@marketing_olga', profileUrl: 'https://www.threads.net/@marketing_olga', postUrl: 'https://www.threads.net/post/2', status: 'waiting', lastTouch: '2026-07-14', notes: 'Отправил КП, ждёт согласования бюджета.' },
+    { id: 'c3', nickname: '@auto_leads_by',  profileUrl: 'https://www.threads.net/@auto_leads_by',  postUrl: 'https://www.threads.net/post/3', status: 'dm',      lastTouch: '2026-07-13', notes: 'Тёплый: комментирует второй пост подряд.' },
+    { id: 'c4', nickname: '@startup_kate',   profileUrl: 'https://www.threads.net/@startup_kate',   postUrl: 'https://www.threads.net/post/4', status: 'reply',   lastTouch: '2026-07-15', notes: 'Уточнить нишу перед ответом.' },
+  ];
+
+  Alpine.data('commandCenter', () => ({
+    /* ══ НАВИГАЦИЯ ══ */
+    tab: 'dashboard',
+    nav: [
+      { id: 'dashboard', label: 'Обзор',          icon: 'layout-dashboard' },
+      { id: 'tasks',     label: 'Задачи',         icon: 'kanban-square' },
+      { id: 'finance',   label: 'Бухгалтерия',    icon: 'wallet' },
+      { id: 'crm',       label: 'Threads CRM',    icon: 'messages-square' },
+      { id: 'analytics', label: 'GA4 Аналитика',  icon: 'bar-chart-3' },
+    ],
+    setTab(id) { this.tab = id; },
+
+    /* ══ ДАННЫЕ ══ */
+    audience: [
+      { id: 'tg1',     label: 'TG 1',      value: '12.4k', accent: 'blue' },
+      { id: 'tg2',     label: 'TG 2',      value: '3.1k',  accent: 'blue' },
+      { id: 'yt',      label: 'YT',        value: '45.2k', accent: 'green' },
+      { id: 'threads', label: 'Threads',   value: '8.9k',  accent: 'blue' },
+      { id: 'tiktok',  label: 'TikTok',    value: '15.0k', accent: 'green' },
+      { id: 'ig',      label: 'Instagram', value: '22.1k', accent: 'blue' },
+    ],
+    // Данные загружаются из Supabase в init(). Стартуем пустыми, чтобы не
+    // показывать ложные моки; INITIAL_* оставлены ниже как справочный сид.
+    tasks: [],
+    envelopes: [],
+    transactions: [],
+    crm: [],
+    loading: true,      // индикатор первичной загрузки
+    loadError: '',      // текст ошибки соединения с БД
+    banner: { show: false, msg: '', type: 'error' }, // всплывающее уведомление
+    /* Мониторинг экосистемы AKU — 4 проекта.
+       url: '' / '#' → ссылка ещё не задана (кнопка станет неактивной).
+       SUPABASE/GA4: series, metrics и distribution приходят из
+       Google Analytics Data API (web) и API площадок (соцсети, бот). */
+    analytics: [
+      {
+        id: 'personal', name: 'Личный бренд · Alexey AI', kind: 'social',
+        kindLabel: 'Соцсети · агрегированная аудитория', color: '#10b981',
+        seriesLabel: 'Просмотры (14 дн.)', distLabel: 'Распределение аудитории',
+        resources: [
+          // Реальные хендлы подставь сюда — сейчас заглушки:
+          { label: 'Telegram',  url: '#' },
+          { label: 'YouTube',   url: '#' },
+          { label: 'TikTok',    url: '#' },
+          { label: 'Instagram', url: '#' },
+          { label: 'Threads',   url: '#' },
+        ],
+        metrics: [
+          { label: 'Просмотры / мес', value: '1.24M' },
+          { label: 'Подписчики',      value: '106.7k' },
+          { label: 'Вовлечённость',   value: '7.4%' },
+          { label: 'Прирост / нед',   value: '+2.3k', accent: 'neon' },
+        ],
+        series: [820, 910, 870, 1040, 1180, 990, 1320, 1210, 1450, 1380, 1520, 1610, 1490, 1740],
+        distribution: [
+          { name: 'YouTube', share: 42 }, { name: 'Instagram', share: 21 },
+          { name: 'Telegram', share: 15 }, { name: 'TikTok', share: 14 },
+          { name: 'Threads', share: 8 },
+        ],
+      },
+      {
+        id: 'media', name: 'AKU Media', kind: 'web',
+        kindLabel: 'Сайт + Telegram-канал', color: '#3b82f6',
+        seriesLabel: 'Сессии (14 дн.)', distLabel: 'Источники трафика',
+        resources: [
+          { label: 'Сайт',     url: 'https://akumedia.github.io/AKU-Media/' },
+          { label: 'TG-канал', url: '#' },
+        ],
+        metrics: [
+          { label: 'Сессии',        value: '3 840' },
+          { label: 'Пользователи',  value: '2 910' },
+          { label: 'Конверсии',     value: '96', accent: 'neon' },
+          { label: 'Время на сайте', value: '2м 41с' },
+        ],
+        series: [120, 145, 132, 180, 210, 175, 240, 220, 265, 251, 290, 310, 284, 335],
+        distribution: [
+          { name: 'Threads', share: 42 }, { name: 'Organic', share: 27 },
+          { name: 'Telegram', share: 19 }, { name: 'Direct', share: 12 },
+        ],
+      },
+      {
+        id: 'automation', name: 'AKU Automation', kind: 'web',
+        kindLabel: 'Сайт + Telegram-канал', color: '#10b981',
+        seriesLabel: 'Сессии (14 дн.)', distLabel: 'Источники трафика',
+        resources: [
+          { label: 'Сайт',     url: 'https://akumedia.github.io/AKU-Automation/' },
+          { label: 'TG-канал', url: '#' },
+        ],
+        metrics: [
+          { label: 'Сессии',        value: '5 120' },
+          { label: 'Пользователи',  value: '3 760' },
+          { label: 'Заявки',        value: '148', accent: 'neon' },
+          { label: 'Время на сайте', value: '3м 12с' },
+        ],
+        series: [160, 190, 175, 230, 260, 240, 300, 285, 330, 315, 360, 390, 370, 420],
+        distribution: [
+          { name: 'Organic', share: 38 }, { name: 'Threads', share: 24 },
+          { name: 'Telegram', share: 22 }, { name: 'Direct', share: 16 },
+        ],
+      },
+      {
+        id: 'jobshub', name: 'AKU Jobs Hub', kind: 'web',
+        kindLabel: 'Сайт + Telegram-бот + канал', color: '#3b82f6',
+        seriesLabel: 'Сессии (14 дн.)', distLabel: 'Источники трафика',
+        resources: [
+          { label: 'Сайт',   url: 'https://akumedia.github.io/AKU-Jobs-Hub-Website/' },
+          { label: 'TG-бот', url: 'https://t.me/AKUJobsHub_bot' },
+          { label: 'TG-канал', url: '#' },
+        ],
+        metrics: [
+          { label: 'Сессии',            value: '2 760' },
+          { label: 'Пользователи',      value: '1 980' },
+          { label: 'Регистрации в боте', value: '214', accent: 'neon' },
+          { label: 'Конверсия',         value: '11.2%' },
+        ],
+        series: [90, 110, 100, 140, 160, 150, 190, 180, 210, 205, 240, 260, 250, 290],
+        distribution: [
+          { name: 'Запуск бота', share: 34 }, { name: 'Organic', share: 28 },
+          { name: 'Telegram', share: 26 }, { name: 'Direct', share: 12 },
+        ],
+      },
+    ],
+
+    /* ══ СЛОВАРИ ОТОБРАЖЕНИЯ ══ */
+    columns: [
+      { id: 'todo',       title: 'Надо сделать' },
+      { id: 'inprogress', title: 'В процессе' },
+      { id: 'done',       title: 'Выполнено' },
+    ],
+    priorityMeta: {
+      high:   { label: 'Высокий', cls: 'bg-red-500/10 text-red-400 border-red-500/20' },
+      medium: { label: 'Средний', cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+      low:    { label: 'Низкий',  cls: 'bg-accent/10 text-accent border-accent/20' },
+    },
+    crmStatusMeta: {
+      reply:   { label: 'Ответить на коммент', cls: 'bg-accent/10 text-accent border-accent/25' },
+      dm:      { label: 'Написать в ЛС',       cls: 'bg-neon/10 text-neon border-neon/25' },
+      waiting: { label: 'Жду ответ',           cls: 'bg-amber-500/10 text-amber-400 border-amber-500/25' },
+    },
+    statusOrder: ['reply', 'dm', 'waiting'],
+    txFilters: [
+      { id: 'all',        label: 'Все' },
+      { id: 'income',     label: 'Приход' },
+      { id: 'allocation', label: 'Распределения' },
+    ],
+
+    /* ══ ИНИЦИАЛИЗАЦИЯ ══ */
+    async init() {
+      this.$nextTick(() => lucide.createIcons()); // рендер статичных иконок
+      // Автофокус на поле названия при открытии модалки
+      this.$watch('taskModal', (open) => open && this.$nextTick(() => this.$refs.taskTitle.focus()));
+      // Первичная загрузка данных из Supabase
+      await this.loadAll();
+    },
+
+    /** Загрузка/перезагрузка всех таблиц. Используется в init() и при
+        откате после неудачной оптимистичной мутации. */
+    async loadAll() {
+      this.loading = true;
+      this.loadError = '';
+      try {
+        const [env, tx, tsk, leads] = await Promise.all([
+          supabase.from('envelopes').select('*'),
+          supabase.from('transactions').select('*').order('date', { ascending: false }),
+          supabase.from('tasks').select('*'),
+          supabase.from('threads_crm').select('*').order('last_touch', { ascending: false }),
+        ]);
+        // Любая ошибка ответа → в общий catch
+        for (const r of [env, tx, tsk, leads]) if (r.error) throw r.error;
+
+        this.envelopes = (env.data || []).map(fromEnvelope);
+        this.tasks = (tsk.data || []).map(fromTask);
+        this.crm = (leads.data || []).map(fromCrm);
+        // Карта id→имя конверта, чтобы показать имя в allocation-транзакциях
+        const nameById = Object.fromEntries(this.envelopes.map((e) => [e.id, e.name]));
+        this.transactions = (tx.data || []).map((r) => fromTx(r, nameById));
+      } catch (err) {
+        this.loadError = 'Не удалось загрузить данные из Supabase. Проверь URL/ключ проекта и политики RLS.';
+        console.error('[loadAll]', err);
+      } finally {
+        this.loading = false;
+        this.$nextTick(() => lucide.createIcons());
+      }
+    },
+
+    /** Показать всплывающее уведомление (авто-скрытие через 3.5с) */
+    notify(msg, type = 'error') {
+      this.banner = { show: true, msg, type };
+      clearTimeout(this._bannerT);
+      this._bannerT = setTimeout(() => (this.banner.show = false), 3500);
+    },
+    /** Единая реакция на ошибку записи: сообщение + ресинк с БД */
+    async fail(err, msg = 'Ошибка сохранения. Данные пересинхронизированы с БД.') {
+      console.error('[supabase write]', err);
+      this.notify(msg, 'error');
+      await this.loadAll();
+    },
+
+    /* ══ ХЕЛПЕРЫ ══ */
+    money(n) { return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 }); },
+    fmtDate(iso) { return new Date(iso + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }); },
+    clean(v) { return String(v ?? '').replace(/[^\d.]/g, ''); },
+
+    /** Плавная SVG-кривая (Catmull-Rom → Bezier) по ряду значений */
+    smoothPath(series, w, h, pad = 6) {
+      const max = Math.max(...series), min = Math.min(...series);
+      const range = max - min || 1;
+      const pts = series.map((v, i) => ({
+        x: pad + i * (w - pad * 2) / (series.length - 1),
+        y: h - pad - (v - min) / range * (h - pad * 2),
+      }));
+      let d = `M ${pts[0].x},${pts[0].y}`;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const p0 = pts[Math.max(i - 1, 0)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(i + 2, pts.length - 1)];
+        d += ` C ${p1.x + (p2.x - p0.x) / 6},${p1.y + (p2.y - p0.y) / 6} ${p2.x - (p3.x - p1.x) / 6},${p2.y - (p3.y - p1.y) / 6} ${p2.x},${p2.y}`;
+      }
+      return d;
+    },
+
+    /** Ссылка задана (реальный http/https), а не заглушка '#' */
+    isLink(url) { return /^https?:\/\//.test(url || ''); },
+
+    /** Координаты точек графика для интерактивных подсказок */
+    chartPoints(series, w, h, pad = 6) {
+      const max = Math.max(...series), min = Math.min(...series);
+      const range = max - min || 1;
+      return series.map((v, i) => ({
+        x: pad + i * (w - pad * 2) / (series.length - 1),
+        y: h - pad - (v - min) / range * (h - pad * 2),
+        v,
+      }));
+    },
+
+    /* ══ ПРОИЗВОДНЫЕ ЗНАЧЕНИЯ ══ */
+    get totalBalance() { return this.envelopes.reduce((s, e) => s + e.balance, 0); },
+    get porsche() {
+      // Фолбэк, пока конверты грузятся из БД или если конверт отсутствует —
+      // защищает карточку цели от обращения к undefined.
+      return this.envelopes.find((e) => e.id === 'porsche') || { balance: 0, target: 300000 };
+    },
+    get filteredTx() { return this.transactions.filter((t) => this.txFilter === 'all' || t.type === this.txFilter); },
+
+    /* ══ ЗАДАЧИ ══ */
+    taskModal: false,
+    taskForm: { title: '', description: '', project: 'AKU Automation', priority: 'medium' },
+
+    tasksBy(status) { return this.tasks.filter((t) => t.status === status); },
+
+    async addTask() {
+      if (!this.taskForm.title.trim()) return;
+      const task = { id: uid(), status: 'todo', ...this.taskForm };
+      // Оптимистично: сразу в UI, форму чистим и закрываем модалку
+      this.tasks.unshift(task);
+      this.taskForm = { title: '', description: '', project: 'AKU Automation', priority: 'medium' };
+      this.taskModal = false;
+      // Фоновая запись; при ошибке убираем карточку и уведомляем
+      const { error } = await supabase.from('tasks').insert(toTaskRow(task));
+      if (error) {
+        this.tasks = this.tasks.filter((t) => t.id !== task.id);
+        this.fail(error, 'Не удалось создать задачу.');
+      }
+    },
+
+    async moveTask(id, dir) {
+      const order = ['todo', 'inprogress', 'done'];
+      const t = this.tasks.find((t) => t.id === id);
+      if (!t) return;
+      const idx = order.indexOf(t.status) + dir;
+      if (idx < 0 || idx >= order.length) return;
+      const prev = t.status;
+      t.status = order[idx];                       // оптимистично
+      const { error } = await supabase.from('tasks').update({ status: t.status }).eq('id', id);
+      if (error) { t.status = prev; this.fail(error, 'Не удалось переместить задачу.'); }
+    },
+
+    /* ══ БУХГАЛТЕРИЯ: распределение платежа (Вариант Б) ══ */
+    incomeAmount: '',
+    incomeNote: '',
+    alloc: {},          // { envelopeId: 'сумма' }
+    txFilter: 'all',
+
+    get amountNum() { return parseFloat(this.incomeAmount) || 0; },
+    get allocatedSum() { return this.envelopes.reduce((s, e) => s + (parseFloat(this.alloc[e.id]) || 0), 0); },
+    get remaining() { return this.amountNum - this.allocatedSum; },
+    get allocValid() { return this.amountNum > 0 && this.allocatedSum > 0 && this.remaining >= 0; },
+
+    /** Докинуть весь нераспределённый остаток в конверт одним кликом */
+    fillRemainder(id) {
+      const r = this.remaining;
+      if (r <= 0) return;
+      const current = parseFloat(this.alloc[id]) || 0;
+      this.alloc[id] = String(current + r);
+    },
+
+    async distribute() {
+      if (!this.allocValid) return;
+      const date = today();
+
+      // 1) Собираем строки транзакций (income + по одной allocation на конверт)
+      //    и целевые балансы конвертов.
+      const incomeRow = {
+        id: uid(), date, type: 'income', amount: this.amountNum,
+        note: this.incomeNote.trim() || 'Входящий платёж', envelope_id: null,
+      };
+      const txRows = [incomeRow];
+      const balanceUpdates = []; // { id, balance } — новые абсолютные балансы
+      this.envelopes.forEach((e) => {
+        const add = parseFloat(this.alloc[e.id]) || 0;
+        if (add > 0) {
+          txRows.push({
+            id: uid(), date, type: 'allocation', amount: add,
+            note: 'Распределение платежа', envelope_id: e.id,
+          });
+          balanceUpdates.push({ id: e.id, balance: e.balance + add });
+        }
+      });
+
+      // 2) Оптимистично обновляем UI: балансы + лента транзакций.
+      const nameById = Object.fromEntries(this.envelopes.map((e) => [e.id, e.name]));
+      balanceUpdates.forEach((u) => {
+        const env = this.envelopes.find((e) => e.id === u.id);
+        if (env) env.balance = u.balance;
+      });
+      this.transactions.unshift(...txRows.map((r) => fromTx(r, nameById)));
+      this.incomeAmount = '';
+      this.incomeNote = '';
+      this.alloc = {};
+
+      // 3) Пишем в БД. Внимание: без атомарной RPC это несколько запросов —
+      //    для прод-нагрузки перенеси в Postgres-функцию (RPC), чтобы insert
+      //    транзакций и update балансов выполнялись одной транзакцией.
+      try {
+        const insRes = await supabase.from('transactions').insert(txRows);
+        if (insRes.error) throw insRes.error;
+        const results = await Promise.all(
+          balanceUpdates.map((u) => supabase.from('envelopes').update({ balance: u.balance }).eq('id', u.id)),
+        );
+        for (const r of results) if (r.error) throw r.error;
+      } catch (err) {
+        // Полный откат до состояния БД — надёжнее ручной инверсии многих записей.
+        this.fail(err, 'Не удалось распределить платёж. Состояние восстановлено из БД.');
+      }
+    },
+
+    /* ══ THREADS CRM ══ */
+    crmFormOpen: false,
+    crmForm: { nickname: '', profileUrl: '', postUrl: '', status: 'reply', notes: '' },
+
+    async addCrm() {
+      if (!this.crmForm.nickname.trim()) return;
+      const lead = { id: uid(), lastTouch: today(), ...this.crmForm };
+      this.crm.unshift(lead);                       // оптимистично
+      this.crmForm = { nickname: '', profileUrl: '', postUrl: '', status: 'reply', notes: '' };
+      this.crmFormOpen = false;
+      const { error } = await supabase.from('threads_crm').insert(toCrmRow(lead));
+      if (error) {
+        this.crm = this.crm.filter((c) => c.id !== lead.id);
+        this.fail(error, 'Не удалось добавить лид.');
+      }
+    },
+
+    /** Быстрая смена статуса по циклу: reply → dm → waiting → reply */
+    async cycleStatus(id) {
+      const e = this.crm.find((e) => e.id === id);
+      if (!e) return;
+      const prevStatus = e.status, prevTouch = e.lastTouch;
+      e.status = this.statusOrder[(this.statusOrder.indexOf(e.status) + 1) % this.statusOrder.length];
+      e.lastTouch = today();                        // оптимистично
+      const { error } = await supabase.from('threads_crm')
+        .update({ status: e.status, last_touch: e.lastTouch }).eq('id', id);
+      if (error) {
+        e.status = prevStatus; e.lastTouch = prevTouch;
+        this.fail(error, 'Не удалось сменить статус лида.');
+      }
+    },
+  }));
+});
+</script>
+
+</body>
+</html>
