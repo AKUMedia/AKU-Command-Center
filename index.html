@@ -448,12 +448,8 @@
               <option :value="s" x-text="s"></option>
             </template>
           </select>
-          <div class="grid grid-cols-2 gap-3">
-            <input x-model="crmForm.budget" placeholder="Бюджет $" inputmode="decimal"
-              class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-neon" />
-            <input x-model="crmForm.nextStep" type="date" title="Дата следующего касания"
-              class="rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-accent" />
-          </div>
+          <input x-model="crmForm.budget" placeholder="Бюджет $" inputmode="decimal"
+            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-neon" />
         </div>
         <!-- Заметка — многострочная, чтобы влезал весь контекст по клиенту -->
         <textarea x-model="crmForm.notes" rows="3" placeholder="Заметка: что нужно клиенту, о чём договорились, цена, возражения…"
@@ -479,7 +475,6 @@
               <th class="px-5 py-3.5 font-medium">Контакт</th>
               <th class="px-5 py-3.5 font-medium">Этап</th>
               <th class="px-5 py-3.5 font-medium">Бюджет</th>
-              <th class="px-5 py-3.5 font-medium">След. шаг</th>
               <th class="px-5 py-3.5 font-medium">Заметки</th>
               <th class="px-5 py-3.5 text-right font-medium">Действия</th>
             </tr>
@@ -492,6 +487,12 @@
                   <td class="px-5 py-3.5">
                     <a :href="e.profileUrl || '#'" target="_blank" rel="noreferrer" class="font-medium text-accent hover:underline" x-text="e.nickname"></a>
                     <p x-show="e.clientName" class="mt-0.5 text-xs text-white" x-text="e.clientName"></p>
+                    <!-- Данные есть на экране, но в базу не записались -->
+                    <div x-show="e.unsaved" class="mt-1 flex items-center gap-2">
+                      <span class="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">не сохранён в базе</span>
+                      <button @click="retrySave(e.id)"
+                        class="rounded-full border border-edge px-2 py-0.5 text-[10px] text-muted transition-colors hover:border-neon/40 hover:text-neon">Повторить</button>
+                    </div>
                     <div class="mt-1 flex flex-wrap items-center gap-2">
                       <span x-show="e.source" class="rounded-full border border-edge bg-base px-2 py-0.5 text-[10px] text-muted" x-text="e.source"></span>
                       <a x-show="e.postUrl" :href="e.postUrl" target="_blank" rel="noreferrer" class="text-[10px] text-muted underline transition-colors hover:text-white">пост</a>
@@ -561,21 +562,6 @@
                   </td>
                 </template>
 
-                <!-- ── Следующий шаг ── -->
-                <template x-if="crmEditId !== e.id">
-                  <td class="px-5 py-3.5">
-                    <span x-show="e.nextStep" :class="e.nextStep && e.nextStep <= todayStr ? 'text-amber-400' : 'text-gray-300'"
-                          x-text="e.nextStep ? fmtDate(e.nextStep) : ''"></span>
-                    <span x-show="!e.nextStep" class="text-muted/40">—</span>
-                  </td>
-                </template>
-                <template x-if="crmEditId === e.id">
-                  <td class="px-5 py-3.5">
-                    <input x-model="crmEdit.nextStep" type="date"
-                      class="rounded-lg border border-edge bg-base px-2 py-1.5 text-xs text-white outline-none focus:border-accent" />
-                  </td>
-                </template>
-
                 <!-- ── Заметки ── -->
                 <template x-if="crmEditId !== e.id">
                   <td class="max-w-[300px] whitespace-pre-wrap px-5 py-3.5 text-muted" x-text="e.notes || '—'"></td>
@@ -625,7 +611,7 @@
           По запросу «<span x-text="crmSearch"></span>» ничего не найдено
         </p>
         <p x-show="crm.length === 0 && !crmSearch && !loading" class="px-5 py-10 text-center text-sm text-muted/60">
-          Пока ни одного лида — нажми «+ Новая запись», чтобы добавить первого
+          Пока ни одного лида — нажми «+ Новый клиент», чтобы добавить первого
         </p>
       </div>
 
@@ -850,7 +836,6 @@ document.addEventListener('alpine:init', () => {
     status: r.status, lastTouch: r.last_touch, notes: r.notes,
     clientName: r.client_name || '', contact: r.contact || '', source: r.source || '',
     budget: r.budget != null ? Number(r.budget) : null,
-    nextStep: r.next_step || '',
   });
   /* Транзакция: envelope_id → отображаемое имя конверта (по карте id→name) */
   const fromTx = (r, nameById) => ({
@@ -870,7 +855,6 @@ document.addEventListener('alpine:init', () => {
     source: c.source || null,
     // Пустая строка в numeric/date колонку не пройдёт — приводим к NULL
     budget: c.budget === '' || c.budget == null ? null : Number(c.budget),
-    next_step: c.nextStep || null,
   });
 
   /* ── НАЧАЛЬНЫЕ ДАННЫЕ (моки) ──
@@ -1060,10 +1044,9 @@ document.addEventListener('alpine:init', () => {
     crmSearch: '',            // строка быстрого поиска по нику и заметкам
     crmEditId: null,          // id лида, который сейчас редактируется
     crmEdit: { nickname: '', profileUrl: '', postUrl: '', notes: '',
-               clientName: '', contact: '', source: '', budget: '', nextStep: '' },
+               clientName: '', contact: '', source: '', budget: '' },
     crmDeleteId: null,        // id лида, ожидающего подтверждения удаления
     crmKeepOpen: true,        // не закрывать форму после сохранения (быстрый ввод)
-    todayStr: today(),        // для подсветки просроченных «след. шагов»
 
     txFilters: [
       { id: 'all',        label: 'Все' },
@@ -1120,17 +1103,32 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    /** Показать всплывающее уведомление (авто-скрытие через 3.5с) */
+    /** Показать всплывающее уведомление */
     notify(msg, type = 'error') {
       this.banner = { show: true, msg, type };
       clearTimeout(this._bannerT);
-      this._bannerT = setTimeout(() => (this.banner.show = false), 3500);
+      // Ошибку держим дольше — её нужно успеть прочитать
+      this._bannerT = setTimeout(() => (this.banner.show = false), type === 'error' ? 9000 : 3500);
     },
-    /** Единая реакция на ошибку записи: сообщение + ресинк с БД */
-    async fail(err, msg = 'Ошибка сохранения. Данные пересинхронизированы с БД.') {
+
+    /** Человекочитаемая причина отказа записи в БД */
+    errText(err) {
+      const code = err?.code || '';
+      if (code === 'PGRST204' || code === '42703')
+        return 'в базе нет нужных колонок — прогони миграцию aku_crm_clients.sql в SQL Editor Supabase';
+      if (code === '23514')
+        return 'база не принимает такой этап воронки — прогони миграцию aku_crm_clients.sql';
+      if (code === '42501' || code === 'PGRST301')
+        return 'политики доступа (RLS) не разрешают запись';
+      return err?.message || String(err);
+    },
+
+    /** Реакция на ошибку записи.
+        reload=false — НЕ пересинхронизируем с БД, чтобы введённое не пропало. */
+    async fail(err, msg = 'Ошибка сохранения.', reload = true) {
       console.error('[supabase write]', err);
-      this.notify(msg, 'error');
-      await this.loadAll();
+      this.notify(msg + ' Причина: ' + this.errText(err), 'error');
+      if (reload) await this.loadAll();
     },
 
     /* ══ ХЕЛПЕРЫ ══ */
@@ -1300,24 +1298,35 @@ document.addEventListener('alpine:init', () => {
     /* ══ THREADS CRM ══ */
     crmFormOpen: false,
     crmForm: { nickname: '', profileUrl: '', postUrl: '', status: 'lead', notes: '',
-                 clientName: '', contact: '', source: '', budget: '', nextStep: '' },
+                 clientName: '', contact: '', source: '', budget: '' },
 
     async addCrm() {
       if (!this.crmForm.nickname.trim()) return;
       const lead = { id: uid(), lastTouch: today(), ...this.crmForm };
       this.crm.unshift(lead);                       // оптимистично
       this.crmForm = { nickname: '', profileUrl: '', postUrl: '', status: 'lead', notes: '',
-                 clientName: '', contact: '', source: '', budget: '', nextStep: '' };
+                 clientName: '', contact: '', source: '', budget: '' };
       // Форма остаётся открытой — чтобы заносить лидов одного за другим.
       if (!this.crmKeepOpen) this.crmFormOpen = false;
       this.$nextTick(() => this.$refs.crmNick && this.$refs.crmNick.focus());
       const { error } = await supabase.from('threads_crm').insert(toCrmRow(lead));
       if (error) {
-        this.crm = this.crm.filter((c) => c.id !== lead.id);
-        this.fail(error, 'Не удалось добавить лид.');
+        // Данные НЕ удаляем: помечаем как несохранённые, чтобы ничего не потерять
+        lead.unsaved = true;
+        this.fail(error, 'Лид «' + lead.nickname + '» не записан в базу.', false);
       } else {
+        lead.unsaved = false;
         this.notify('Лид «' + lead.nickname + '» сохранён в базе', 'ok');
       }
+    },
+
+    /** Повторная попытка записать лид, который не сохранился (upsert) */
+    async retrySave(id) {
+      const e = this.crm.find((e) => e.id === id);
+      if (!e) return;
+      const { error } = await supabase.from('threads_crm').upsert(toCrmRow(e));
+      if (error) { this.fail(error, 'Снова не удалось сохранить.', false); }
+      else { e.unsaved = false; this.notify('Сохранено в базе', 'ok'); }
     },
 
     /* ── Инлайн-редактирование лида (заметки и контакты, без смены статуса) ── */
@@ -1331,7 +1340,7 @@ document.addEventListener('alpine:init', () => {
         nickname: e.nickname, profileUrl: e.profileUrl || '',
         postUrl: e.postUrl || '', notes: e.notes || '',
         clientName: e.clientName || '', contact: e.contact || '',
-        source: e.source || '', budget: e.budget ?? '', nextStep: e.nextStep || '',
+        source: e.source || '', budget: e.budget ?? '',
       };
     },
     cancelEdit() { this.crmEditId = null; },
@@ -1343,7 +1352,7 @@ document.addEventListener('alpine:init', () => {
       // Снимок для отката
       const prev = { nickname: e.nickname, profileUrl: e.profileUrl, postUrl: e.postUrl, notes: e.notes,
                      clientName: e.clientName, contact: e.contact, source: e.source,
-                     budget: e.budget, nextStep: e.nextStep };
+                     budget: e.budget };
       Object.assign(e, {                            // оптимистично
         nickname: this.crmEdit.nickname.trim(),
         profileUrl: this.crmEdit.profileUrl.trim(),
@@ -1353,7 +1362,6 @@ document.addEventListener('alpine:init', () => {
         contact: this.crmEdit.contact.trim(),
         source: this.crmEdit.source,
         budget: this.crmEdit.budget === '' ? null : Number(this.crmEdit.budget),
-        nextStep: this.crmEdit.nextStep,
       });
       const id = this.crmEditId;
       this.crmEditId = null;
@@ -1362,10 +1370,9 @@ document.addEventListener('alpine:init', () => {
         post_url: e.postUrl, notes: e.notes,
         client_name: e.clientName || null, contact: e.contact || null,
         source: e.source || null, budget: e.budget,
-        next_step: e.nextStep || null,
       }).eq('id', id);
-      if (error) { Object.assign(e, prev); this.fail(error, 'Не удалось сохранить изменения.'); }
-      else { this.notify('Изменения сохранены', 'ok'); }
+      if (error) { e.unsaved = true; this.fail(error, 'Изменения не записаны в базу.', false); }
+      else { e.unsaved = false; this.notify('Изменения сохранены', 'ok'); }
     },
 
     /** Смена этапа воронки выбором из списка (+ обновление даты касания) */
@@ -1379,19 +1386,19 @@ document.addEventListener('alpine:init', () => {
         .update({ status: e.status, last_touch: e.lastTouch }).eq('id', id);
       if (error) {
         e.status = prevStatus; e.lastTouch = prevTouch;
-        this.fail(error, 'Не удалось сменить этап.');
+        this.fail(error, 'Не удалось сменить этап.', false);
       }
     },
 
     /** Выгрузка всей базы клиентов в CSV — резервная копия одним кликом */
     exportCsv() {
       const head = ['Никнейм', 'Имя/Компания', 'Контакт', 'Этап', 'Источник',
-                    'Бюджет', 'След. шаг', 'Касание', 'Профиль', 'Пост', 'Заметки'];
+                    'Бюджет', 'Касание', 'Профиль', 'Пост', 'Заметки'];
       const esc = (v) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
       const rows = this.crm.map((e) => [
         e.nickname, e.clientName, e.contact,
         (this.crmStatusMeta[e.status] || {}).label || e.status,
-        e.source, e.budget ?? '', e.nextStep, e.lastTouch,
+        e.source, e.budget ?? '', e.lastTouch,
         e.profileUrl, e.postUrl, e.notes,
       ].map(esc).join(','));
       // BOM — чтобы кириллица корректно открылась в Excel
@@ -1415,7 +1422,7 @@ document.addEventListener('alpine:init', () => {
       const { error } = await supabase.from('threads_crm').delete().eq('id', id);
       if (error) {
         this.crm.splice(idx, 0, removed);           // вернуть на прежнее место
-        this.fail(error, 'Не удалось удалить лид.');
+        this.fail(error, 'Не удалось удалить лид.', false);
       } else {
         this.notify('Лид удалён', 'ok');
       }
