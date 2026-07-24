@@ -52,7 +52,53 @@
 
 <body class="bg-base font-body text-gray-200 antialiased">
 
-<div x-data="commandCenter" x-cloak class="flex min-h-screen">
+<div x-data="commandCenter" x-cloak>
+
+  <!-- ═══════════════ ЭКРАН ЗАГРУЗКИ СЕССИИ ═══════════════ -->
+  <div x-show="!authReady" class="flex min-h-screen items-center justify-center">
+    <span class="h-6 w-6 animate-spin rounded-full border-2 border-edge border-t-accent"></span>
+  </div>
+
+  <!-- ═══════════════ ФОРМА ВХОДА ═══════════════ -->
+  <div x-show="authReady && !session" x-transition.opacity
+       class="flex min-h-screen items-center justify-center px-4">
+    <div class="w-full max-w-sm rounded-2xl border border-edge bg-panel p-8">
+      <div class="mb-6 flex items-center gap-3">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-accent font-display text-sm font-bold text-white shadow-[0_0_20px_#3b82f680]">A</div>
+        <div>
+          <p class="font-display text-base font-semibold text-white">AKU Command Center</p>
+          <p class="text-[11px] uppercase tracking-widest text-muted">Приватный доступ</p>
+        </div>
+      </div>
+
+      <label class="block text-xs font-medium uppercase tracking-widest text-muted">Email</label>
+      <input x-model="authForm.email" type="email" autocomplete="email"
+        @keydown.enter="signIn()"
+        class="mt-1.5 w-full rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
+
+      <label class="mt-4 block text-xs font-medium uppercase tracking-widest text-muted">Пароль</label>
+      <input x-model="authForm.password" type="password" autocomplete="current-password"
+        @keydown.enter="signIn()"
+        class="mt-1.5 w-full rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
+
+      <p x-show="authError" class="mt-3 rounded-xl border border-red-500/25 bg-red-500/10 px-3 py-2 text-xs text-red-300" x-text="authError"></p>
+      <p x-show="authInfo" class="mt-3 rounded-xl border border-neon/25 bg-neon/10 px-3 py-2 text-xs text-neon" x-text="authInfo"></p>
+
+      <button @click="signIn()" :disabled="authBusy || !authForm.email || !authForm.password"
+        class="mt-5 w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition-all duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40">
+        <span x-text="authBusy ? 'Проверяю…' : 'Войти'"></span>
+      </button>
+
+      <!-- Регистрация нужна один раз, чтобы создать твой аккаунт -->
+      <button @click="signUp()" :disabled="authBusy || !authForm.email || !authForm.password"
+        class="mt-2 w-full rounded-xl border border-edge px-4 py-2.5 text-xs text-muted transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-40">
+        Первый вход — создать аккаунт
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════ ПРИЛОЖЕНИЕ (только для авторизованных) ═══════════════ -->
+  <div x-show="session" class="flex min-h-screen">
 
   <!-- ═══════════════ САЙДБАР (иконки на мобиле, полный на lg) ═══════════════ -->
   <aside class="sticky top-0 flex h-screen w-16 shrink-0 flex-col border-r border-edge bg-panel lg:w-60">
@@ -77,9 +123,14 @@
       </template>
     </nav>
 
-    <div class="hidden border-t border-edge px-6 py-4 lg:block">
-      <p class="text-xs text-muted">v1 · прототип</p>
-      <p class="text-xs text-muted/60">Supabase — шаг 2</p>
+    <div class="border-t border-edge px-3 py-4 lg:px-6">
+      <p class="hidden truncate text-xs text-muted lg:block" x-text="session?.user?.email"></p>
+      <button @click="signOut()"
+        class="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-edge px-2 py-2 text-xs text-muted transition-colors hover:border-red-500/40 hover:text-red-400"
+        title="Выйти">
+        <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+        <span class="hidden lg:inline">Выйти</span>
+      </button>
     </div>
   </aside>
 
@@ -415,9 +466,17 @@
             <span x-text="'(' + crm.filter(c => c.status === s).length + ')'"></span>
           </button>
         </template>
-        <span class="ml-auto px-3 text-xs text-muted">
-          Пайплайн: <span class="font-display font-semibold text-neon" x-text="money(pipelineSum)"></span>
-        </span>
+        <div class="ml-auto flex items-center gap-3 px-3">
+          <select x-model="crmSort"
+            class="cursor-pointer rounded-lg border border-edge bg-base px-2 py-1 text-xs text-muted outline-none focus:border-accent">
+            <option value="recent">Сначала свежие</option>
+            <option value="budget">По бюджету</option>
+            <option value="name">По имени</option>
+          </select>
+          <span class="text-xs text-muted">
+            Пайплайн: <span class="font-display font-semibold text-neon" x-text="money(pipelineSum)"></span>
+          </span>
+        </div>
       </div>
 
       <!-- Форма добавления клиента (остаётся открытой для ввода подряд) -->
@@ -757,6 +816,8 @@
     </div>
   </div>
 
+  </div><!-- /контейнер приложения (x-show="session") -->
+
   <!-- Всплывающее уведомление о фоновых операциях (внутри x-data) -->
   <div x-show="banner.show" x-transition x-cloak
        class="fixed bottom-5 left-1/2 z-[60] -translate-x-1/2 rounded-xl border px-4 py-2.5 text-sm shadow-2xl backdrop-blur"
@@ -1055,6 +1116,54 @@ document.addEventListener('alpine:init', () => {
     ],
 
     /* ══ ИНИЦИАЛИЗАЦИЯ ══ */
+    /* ══ АВТОРИЗАЦИЯ ══ */
+    session: null,        // текущая сессия Supabase Auth
+    authReady: false,     // сессия проверена (чтобы не мигала форма входа)
+    authBusy: false,
+    authError: '',
+    authInfo: '',
+    authForm: { email: '', password: '' },
+
+    async signIn() {
+      this.authBusy = true; this.authError = ''; this.authInfo = '';
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: this.authForm.email.trim(), password: this.authForm.password,
+      });
+      this.authBusy = false;
+      if (error) {
+        this.authError = error.message === 'Invalid login credentials'
+          ? 'Неверный email или пароль. Если аккаунта ещё нет — нажми «создать аккаунт».'
+          : error.message;
+        return;
+      }
+      this.session = data.session;
+      this.authForm.password = '';
+      await this.loadAll();
+    },
+
+    async signUp() {
+      this.authBusy = true; this.authError = ''; this.authInfo = '';
+      const { data, error } = await supabase.auth.signUp({
+        email: this.authForm.email.trim(), password: this.authForm.password,
+      });
+      this.authBusy = false;
+      if (error) { this.authError = error.message; return; }
+      if (data.session) {          // подтверждение email отключено — сразу входим
+        this.session = data.session;
+        this.authForm.password = '';
+        await this.loadAll();
+      } else {                     // включено подтверждение по почте
+        this.authInfo = 'Аккаунт создан. Проверь почту и подтверди адрес, затем войди.';
+      }
+    },
+
+    async signOut() {
+      await supabase.auth.signOut();
+      this.session = null;
+      // Чистим данные, чтобы они не остались на экране после выхода
+      this.tasks = []; this.envelopes = []; this.transactions = []; this.crm = [];
+    },
+
     async init() {
       // Вкладка запоминается в адресе (#crm) — переживает обновление
       // страницы и позволяет открыть нужный раздел по прямой ссылке.
@@ -1072,8 +1181,17 @@ document.addEventListener('alpine:init', () => {
       this.$nextTick(() => lucide.createIcons()); // рендер статичных иконок
       // Автофокус на поле названия при открытии модалки
       this.$watch('taskModal', (open) => open && this.$nextTick(() => this.$refs.taskTitle.focus()));
-      // Первичная загрузка данных из Supabase
-      await this.loadAll();
+
+      // ── Сессия: восстанавливаем сохранённую (переживает перезагрузку) ──
+      const { data: { session } } = await supabase.auth.getSession();
+      this.session = session;
+      this.authReady = true;
+      // Реакция на вход/выход/протухание токена в других вкладках
+      supabase.auth.onAuthStateChange((_event, s) => { this.session = s; });
+
+      // Данные грузим только для авторизованного пользователя
+      if (this.session) await this.loadAll();
+      else this.loading = false;
     },
 
     /** Загрузка/перезагрузка всех таблиц. Используется в init() и при
@@ -1190,15 +1308,23 @@ document.addEventListener('alpine:init', () => {
     },
     get filteredTx() { return this.transactions.filter((t) => this.txFilter === 'all' || t.type === this.txFilter); },
 
-    /** Поиск по всем полям клиента + фильтр по этапу воронки */
+    crmDupGuard: null,        // защита от случайного дубля по нику
+    crmSort: 'recent',        // recent | budget | name
+
+    /** Поиск по всем полям клиента + фильтр по этапу воронки + сортировка */
     get filteredCrm() {
       const q = this.crmSearch.trim().toLowerCase();
-      return this.crm.filter((e) => {
+      const list = this.crm.filter((e) => {
         if (this.crmStatusFilter !== 'all' && e.status !== this.crmStatusFilter) return false;
         if (!q) return true;
         return [e.nickname, e.clientName, e.contact, e.notes, e.source]
           .some((v) => (v || '').toLowerCase().includes(q));
       });
+      const sorted = [...list];
+      if (this.crmSort === 'budget') sorted.sort((a, b) => (Number(b.budget) || 0) - (Number(a.budget) || 0));
+      else if (this.crmSort === 'name') sorted.sort((a, b) => (a.nickname || '').localeCompare(b.nickname || '', 'ru'));
+      else sorted.sort((a, b) => String(b.lastTouch || '').localeCompare(String(a.lastTouch || '')));
+      return sorted;
     },
     /** Сумма бюджетов по активным лидам (без отказов) */
     get pipelineSum() {
@@ -1316,6 +1442,15 @@ document.addEventListener('alpine:init', () => {
 
     async addCrm() {
       if (!this.crmForm.nickname.trim()) return;
+      // Защита от дублей: одинаковый ник уже есть — предупреждаем и не плодим копии
+      const nick = this.crmForm.nickname.trim().toLowerCase().replace(/^@/, '');
+      const dup = this.crm.find((c) => (c.nickname || '').toLowerCase().replace(/^@/, '') === nick);
+      if (dup && this.crmDupGuard !== nick) {
+        this.crmDupGuard = nick;   // второе нажатие подряд всё же добавит
+        this.notify('Клиент «' + dup.nickname + '» уже есть в базе. Нажми ещё раз, если это другой человек.', 'error');
+        return;
+      }
+      this.crmDupGuard = null;
       const lead = { id: uid(), lastTouch: today(), ...this.crmForm };
       this.crm.unshift(lead);                       // оптимистично
       this.crmForm = { nickname: '', profileUrl: '', postUrl: '', status: 'lead', notes: '',
