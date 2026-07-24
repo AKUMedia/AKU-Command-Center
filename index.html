@@ -1114,13 +1114,14 @@ document.addEventListener('alpine:init', () => {
     /** Человекочитаемая причина отказа записи в БД */
     errText(err) {
       const code = err?.code || '';
+      const tail = code ? ' [код ' + code + ']' : '';
       if (code === 'PGRST204' || code === '42703')
-        return 'в базе нет нужных колонок — прогони миграцию aku_crm_clients.sql в SQL Editor Supabase';
+        return 'в базе нет нужных колонок — прогони миграцию aku_crm_clients.sql в SQL Editor Supabase' + tail;
       if (code === '23514')
-        return 'база не принимает такой этап воронки — прогони миграцию aku_crm_clients.sql';
+        return 'база не принимает такой этап воронки — прогони миграцию aku_crm_clients.sql' + tail;
       if (code === '42501' || code === 'PGRST301')
-        return 'политики доступа (RLS) не разрешают запись';
-      return err?.message || String(err);
+        return 'политики доступа (RLS) не разрешают запись — прогони aku_fix_rls.sql' + tail;
+      return (err?.message || String(err)) + tail;
     },
 
     /** Реакция на ошибку записи.
