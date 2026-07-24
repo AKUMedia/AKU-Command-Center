@@ -1056,6 +1056,19 @@ document.addEventListener('alpine:init', () => {
 
     /* ══ ИНИЦИАЛИЗАЦИЯ ══ */
     async init() {
+      // Вкладка запоминается в адресе (#crm) — переживает обновление
+      // страницы и позволяет открыть нужный раздел по прямой ссылке.
+      const fromHash = location.hash.replace('#', '');
+      if (this.nav.some((n) => n.id === fromHash)) this.tab = fromHash;
+      // Смена вкладки → обновляем адрес (replaceState, чтобы не засорять историю)
+      this.$watch('tab', (t) => history.replaceState(null, '', '#' + t));
+      if (!location.hash) history.replaceState(null, '', '#' + this.tab);
+      // Кнопки «назад/вперёд» в браузере тоже переключают вкладку
+      window.addEventListener('hashchange', () => {
+        const h = location.hash.replace('#', '');
+        if (this.nav.some((n) => n.id === h) && h !== this.tab) this.tab = h;
+      });
+
       this.$nextTick(() => lucide.createIcons()); // рендер статичных иконок
       // Автофокус на поле названия при открытии модалки
       this.$watch('taskModal', (open) => open && this.$nextTick(() => this.$refs.taskTitle.focus()));
