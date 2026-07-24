@@ -377,40 +377,60 @@
       <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 class="font-display text-xl font-semibold tracking-tight text-white">Threads CRM</h2>
-          <p class="mt-1 text-sm text-muted">Клик по статусу переключает его по циклу и обновляет дату касания</p>
+          <p class="mt-1 text-sm text-muted">Всё сохраняется в базу сразу · клик по статусу меняет его и дату касания</p>
         </div>
-        <button @click="crmFormOpen = !crmFormOpen"
-          class="flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-all hover:brightness-110 hover:shadow-[0_0_24px_#3b82f655]">
-          <span x-text="crmFormOpen ? '✕ Закрыть' : '+ Новая запись'"></span>
-        </button>
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Быстрый поиск по нику и заметкам -->
+          <div class="relative">
+            <input x-model="crmSearch" placeholder="Поиск по нику или заметке…"
+              class="w-64 rounded-xl border border-edge bg-panel py-2.5 pl-9 pr-8 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
+            <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <button x-show="crmSearch" @click="crmSearch = ''" aria-label="Очистить поиск"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted transition-colors hover:text-white">✕</button>
+          </div>
+          <button @click="crmFormOpen = !crmFormOpen"
+            class="flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:brightness-110 hover:shadow-[0_0_24px_#3b82f655]">
+            <span x-text="crmFormOpen ? '✕ Закрыть' : '+ Новая запись'"></span>
+          </button>
+        </div>
       </div>
 
-      <!-- Инлайн-форма добавления -->
+      <!-- Инлайн-форма добавления (остаётся открытой для ввода подряд) -->
       <div x-show="crmFormOpen" x-transition
-           class="mb-5 grid gap-3 rounded-2xl border border-edge bg-panel p-5 sm:grid-cols-2 lg:grid-cols-5">
-        <input x-model="crmForm.nickname" placeholder="@nickname"
-          class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-muted/40 focus:border-accent" />
-        <input x-model="crmForm.profileUrl" placeholder="Ссылка на профиль"
-          class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-muted/40 focus:border-accent" />
-        <input x-model="crmForm.postUrl" placeholder="Ссылка на пост/коммент"
-          class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-muted/40 focus:border-accent" />
-        <select x-model="crmForm.status"
-          class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none focus:border-accent">
-          <template x-for="s in statusOrder" :key="s">
-            <option :value="s" x-text="crmStatusMeta[s].label"></option>
-          </template>
-        </select>
-        <input x-model="crmForm.notes" placeholder="Заметка"
-          class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-muted/40 focus:border-accent lg:col-span-4" />
-        <button @click="addCrm()"
-          class="rounded-xl bg-neon px-4 py-2.5 text-sm font-semibold text-base transition-all hover:brightness-110">
-          Сохранить
-        </button>
+           class="mb-5 rounded-2xl border border-edge bg-panel p-5">
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <input x-ref="crmNick" x-model="crmForm.nickname" placeholder="@nickname"
+            @keydown.enter="addCrm()"
+            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
+          <input x-model="crmForm.profileUrl" placeholder="Ссылка на профиль"
+            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
+          <input x-model="crmForm.postUrl" placeholder="Ссылка на пост/коммент"
+            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
+          <select x-model="crmForm.status"
+            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none focus:border-accent">
+            <template x-for="s in statusOrder" :key="s">
+              <option :value="s" x-text="crmStatusMeta[s].label"></option>
+            </template>
+          </select>
+        </div>
+        <!-- Заметка — многострочная, чтобы влезал весь контекст по клиенту -->
+        <textarea x-model="crmForm.notes" rows="3" placeholder="Заметка: о чём говорили, что нужно клиенту, договорённости, цена…"
+          class="mt-3 w-full resize-y rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-accent"></textarea>
+        <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <label class="flex cursor-pointer items-center gap-2 text-xs text-muted">
+            <input type="checkbox" x-model="crmKeepOpen" class="h-3.5 w-3.5 accent-blue-500" />
+            Не закрывать форму — вносить лидов подряд
+          </label>
+          <button @click="addCrm()" :disabled="!crmForm.nickname.trim()"
+            class="rounded-xl bg-neon px-5 py-2.5 text-sm font-semibold text-base transition-all duration-300 hover:brightness-110 hover:shadow-[0_0_24px_#10b98155] disabled:cursor-not-allowed disabled:opacity-40">
+            Сохранить лид
+          </button>
+        </div>
       </div>
 
       <!-- Таблица -->
       <div class="overflow-x-auto rounded-2xl border border-edge bg-panel">
-        <table class="w-full min-w-[760px] text-left text-sm">
+        <table class="w-full min-w-[900px] text-left text-sm">
           <thead>
             <tr class="border-b border-edge text-xs uppercase tracking-widest text-muted">
               <th class="px-5 py-3.5 font-medium">Никнейм</th>
@@ -418,32 +438,106 @@
               <th class="px-5 py-3.5 font-medium">Статус</th>
               <th class="px-5 py-3.5 font-medium">Касание</th>
               <th class="px-5 py-3.5 font-medium">Заметки</th>
+              <th class="px-5 py-3.5 text-right font-medium">Действия</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-edge">
-            <template x-for="e in crm" :key="e.id">
-              <tr class="transition-colors hover:bg-white/[0.02]">
-                <td class="px-5 py-3.5">
-                  <a :href="e.profileUrl" target="_blank" rel="noreferrer" class="font-medium text-accent hover:underline" x-text="e.nickname"></a>
-                </td>
-                <td class="px-5 py-3.5">
-                  <a :href="e.postUrl" target="_blank" rel="noreferrer" class="inline-flex items-center gap-1 text-muted hover:text-white">
-                    Открыть
-                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
-                  </a>
-                </td>
+            <template x-for="e in filteredCrm" :key="e.id">
+              <tr class="align-top transition-colors hover:bg-white/[0.02]">
+                <!-- ── Обычный режим ── -->
+                <template x-if="crmEditId !== e.id">
+                  <td class="px-5 py-3.5">
+                    <a :href="e.profileUrl || '#'" target="_blank" rel="noreferrer" class="font-medium text-accent hover:underline" x-text="e.nickname"></a>
+                  </td>
+                </template>
+                <template x-if="crmEditId === e.id">
+                  <td class="px-5 py-3.5">
+                    <input x-model="crmEdit.nickname" placeholder="@nickname"
+                      class="w-full rounded-lg border border-accent/40 bg-base px-2.5 py-1.5 text-sm text-white outline-none" />
+                    <input x-model="crmEdit.profileUrl" placeholder="Ссылка на профиль"
+                      class="mt-2 w-full rounded-lg border border-edge bg-base px-2.5 py-1.5 text-xs text-white outline-none focus:border-accent" />
+                  </td>
+                </template>
+
+                <template x-if="crmEditId !== e.id">
+                  <td class="px-5 py-3.5">
+                    <a x-show="e.postUrl" :href="e.postUrl" target="_blank" rel="noreferrer" class="inline-flex items-center gap-1 text-muted transition-colors hover:text-white">
+                      Открыть
+                      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+                    </a>
+                    <span x-show="!e.postUrl" class="text-muted/40">—</span>
+                  </td>
+                </template>
+                <template x-if="crmEditId === e.id">
+                  <td class="px-5 py-3.5">
+                    <input x-model="crmEdit.postUrl" placeholder="Ссылка на пост"
+                      class="w-full rounded-lg border border-edge bg-base px-2.5 py-1.5 text-xs text-white outline-none focus:border-accent" />
+                  </td>
+                </template>
+
                 <td class="px-5 py-3.5">
                   <button @click="cycleStatus(e.id)" title="Сменить статус"
                     class="rounded-full border px-3 py-1 text-[11px] font-medium transition-transform active:scale-95"
                     :class="crmStatusMeta[e.status].cls" x-text="crmStatusMeta[e.status].label"></button>
                 </td>
                 <td class="px-5 py-3.5 text-muted" x-text="fmtDate(e.lastTouch)"></td>
-                <td class="max-w-[280px] px-5 py-3.5 text-muted" x-text="e.notes"></td>
+
+                <!-- Заметки: просмотр / редактирование -->
+                <template x-if="crmEditId !== e.id">
+                  <td class="max-w-[320px] whitespace-pre-wrap px-5 py-3.5 text-muted" x-text="e.notes || '—'"></td>
+                </template>
+                <template x-if="crmEditId === e.id">
+                  <td class="px-5 py-3.5">
+                    <textarea x-model="crmEdit.notes" rows="3" placeholder="Заметка"
+                      class="w-full min-w-[240px] resize-y rounded-lg border border-accent/40 bg-base px-2.5 py-1.5 text-sm text-white outline-none"></textarea>
+                  </td>
+                </template>
+
+                <!-- Действия -->
+                <td class="px-5 py-3.5 text-right">
+                  <!-- Просмотр: редактировать / удалить -->
+                  <div x-show="crmEditId !== e.id && crmDeleteId !== e.id" class="flex justify-end gap-2">
+                    <button @click="startEdit(e.id)" title="Редактировать"
+                      class="rounded-lg border border-edge p-1.5 text-muted transition-colors hover:border-accent/40 hover:text-accent">
+                      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                    </button>
+                    <button @click="crmDeleteId = e.id" title="Удалить"
+                      class="rounded-lg border border-edge p-1.5 text-muted transition-colors hover:border-red-500/40 hover:text-red-400">
+                      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                    </button>
+                  </div>
+                  <!-- Подтверждение удаления -->
+                  <div x-show="crmDeleteId === e.id" class="flex items-center justify-end gap-2">
+                    <span class="text-xs text-muted">Удалить?</span>
+                    <button @click="deleteLead(e.id)"
+                      class="rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/20">Да</button>
+                    <button @click="crmDeleteId = null"
+                      class="rounded-lg border border-edge px-2.5 py-1 text-xs text-muted transition-colors hover:text-white">Нет</button>
+                  </div>
+                  <!-- Режим редактирования -->
+                  <div x-show="crmEditId === e.id" class="flex justify-end gap-2">
+                    <button @click="saveEdit()"
+                      class="rounded-lg bg-neon px-3 py-1.5 text-xs font-semibold text-base transition-all hover:brightness-110">Сохранить</button>
+                    <button @click="cancelEdit()"
+                      class="rounded-lg border border-edge px-3 py-1.5 text-xs text-muted transition-colors hover:text-white">Отмена</button>
+                  </div>
+                </td>
               </tr>
             </template>
           </tbody>
         </table>
+        <!-- Пустые состояния -->
+        <p x-show="filteredCrm.length === 0 && crmSearch" class="px-5 py-10 text-center text-sm text-muted/60">
+          По запросу «<span x-text="crmSearch"></span>» ничего не найдено
+        </p>
+        <p x-show="crm.length === 0 && !crmSearch && !loading" class="px-5 py-10 text-center text-sm text-muted/60">
+          Пока ни одного лида — нажми «+ Новая запись», чтобы добавить первого
+        </p>
       </div>
+
+      <p class="mt-3 text-xs text-muted/60">
+        Всего лидов: <span class="text-muted" x-text="crm.length"></span><span x-show="crmSearch"> · найдено: <span class="text-muted" x-text="filteredCrm.length"></span></span>
+      </p>
     </section>
 
     <!-- ─────────── 5. GA4 АНАЛИТИКА (заглушка под Data API) ─────────── -->
@@ -850,6 +944,14 @@ document.addEventListener('alpine:init', () => {
       waiting: { label: 'Жду ответ',           cls: 'bg-amber-500/10 text-amber-400 border-amber-500/25' },
     },
     statusOrder: ['reply', 'dm', 'waiting'],
+
+    /* ── CRM: поиск, редактирование, удаление ── */
+    crmSearch: '',            // строка быстрого поиска по нику и заметкам
+    crmEditId: null,          // id лида, который сейчас редактируется
+    crmEdit: { nickname: '', profileUrl: '', postUrl: '', notes: '' },
+    crmDeleteId: null,        // id лида, ожидающего подтверждения удаления
+    crmKeepOpen: true,        // не закрывать форму после сохранения (быстрый ввод)
+
     txFilters: [
       { id: 'all',        label: 'Все' },
       { id: 'income',     label: 'Приход' },
@@ -962,6 +1064,15 @@ document.addEventListener('alpine:init', () => {
     },
     get filteredTx() { return this.transactions.filter((t) => this.txFilter === 'all' || t.type === this.txFilter); },
 
+    /** Поиск лидов по никнейму и тексту заметок (регистронезависимо) */
+    get filteredCrm() {
+      const q = this.crmSearch.trim().toLowerCase();
+      if (!q) return this.crm;
+      return this.crm.filter((e) =>
+        (e.nickname || '').toLowerCase().includes(q) ||
+        (e.notes || '').toLowerCase().includes(q));
+    },
+
     /* ══ ЗАДАЧИ ══ */
     taskModal: false,
     taskForm: { title: '', description: '', project: 'AKU Automation', priority: 'medium' },
@@ -1073,11 +1184,67 @@ document.addEventListener('alpine:init', () => {
       const lead = { id: uid(), lastTouch: today(), ...this.crmForm };
       this.crm.unshift(lead);                       // оптимистично
       this.crmForm = { nickname: '', profileUrl: '', postUrl: '', status: 'reply', notes: '' };
-      this.crmFormOpen = false;
+      // Форма остаётся открытой — чтобы заносить лидов одного за другим.
+      if (!this.crmKeepOpen) this.crmFormOpen = false;
+      this.$nextTick(() => this.$refs.crmNick && this.$refs.crmNick.focus());
       const { error } = await supabase.from('threads_crm').insert(toCrmRow(lead));
       if (error) {
         this.crm = this.crm.filter((c) => c.id !== lead.id);
         this.fail(error, 'Не удалось добавить лид.');
+      } else {
+        this.notify('Лид «' + lead.nickname + '» сохранён в базе', 'ok');
+      }
+    },
+
+    /* ── Инлайн-редактирование лида (заметки и контакты, без смены статуса) ── */
+    startEdit(id) {
+      const e = this.crm.find((e) => e.id === id);
+      if (!e) return;
+      this.crmDeleteId = null;
+      this.crmEditId = id;
+      // Копия значений — правки применяются только по «Сохранить»
+      this.crmEdit = {
+        nickname: e.nickname, profileUrl: e.profileUrl || '',
+        postUrl: e.postUrl || '', notes: e.notes || '',
+      };
+    },
+    cancelEdit() { this.crmEditId = null; },
+
+    async saveEdit() {
+      const e = this.crm.find((e) => e.id === this.crmEditId);
+      if (!e) return;
+      if (!this.crmEdit.nickname.trim()) return;
+      // Снимок для отката
+      const prev = { nickname: e.nickname, profileUrl: e.profileUrl, postUrl: e.postUrl, notes: e.notes };
+      Object.assign(e, {                            // оптимистично
+        nickname: this.crmEdit.nickname.trim(),
+        profileUrl: this.crmEdit.profileUrl.trim(),
+        postUrl: this.crmEdit.postUrl.trim(),
+        notes: this.crmEdit.notes,
+      });
+      const id = this.crmEditId;
+      this.crmEditId = null;
+      const { error } = await supabase.from('threads_crm').update({
+        nickname: e.nickname, profile_url: e.profileUrl,
+        post_url: e.postUrl, notes: e.notes,
+      }).eq('id', id);
+      if (error) { Object.assign(e, prev); this.fail(error, 'Не удалось сохранить изменения.'); }
+      else { this.notify('Изменения сохранены', 'ok'); }
+    },
+
+    /* ── Удаление лида (в два клика: запрос → подтверждение) ── */
+    async deleteLead(id) {
+      const idx = this.crm.findIndex((e) => e.id === id);
+      if (idx === -1) return;
+      const removed = this.crm[idx];
+      this.crm.splice(idx, 1);                      // оптимистично
+      this.crmDeleteId = null;
+      const { error } = await supabase.from('threads_crm').delete().eq('id', id);
+      if (error) {
+        this.crm.splice(idx, 0, removed);           // вернуть на прежнее место
+        this.fail(error, 'Не удалось удалить лид.');
+      } else {
+        this.notify('Лид удалён', 'ok');
       }
     },
 
