@@ -89,53 +89,68 @@
         <span x-text="authBusy ? 'Проверяю…' : 'Войти'"></span>
       </button>
 
-      <!-- Регистрация нужна один раз, чтобы создать твой аккаунт -->
-      <button @click="signUp()" :disabled="authBusy || !authForm.email || !authForm.password"
-        class="mt-2 w-full rounded-xl border border-edge px-4 py-2.5 text-xs text-muted transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-40">
-        Первый вход — создать аккаунт
-      </button>
+      <p class="mt-4 text-center text-[11px] text-muted/50">
+        Приватная панель. Регистрация закрыта.
+      </p>
     </div>
   </div>
 
   <!-- ═══════════════ ПРИЛОЖЕНИЕ (только для авторизованных) ═══════════════ -->
   <div x-show="session" class="flex min-h-screen">
 
-  <!-- ═══════════════ САЙДБАР (иконки на мобиле, полный на lg) ═══════════════ -->
-  <aside class="sticky top-0 flex h-screen w-16 shrink-0 flex-col border-r border-edge bg-panel lg:w-60">
-    <div class="flex items-center gap-3 px-4 py-6 lg:px-6">
-      <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-accent font-display text-sm font-bold text-white shadow-[0_0_20px_#3b82f680]">A</div>
-      <div class="hidden lg:block">
+  <!-- ═══════════════ САЙДБАР (скрыт на телефоне, выдвигается бургером) ═══════════════ -->
+  <aside class="fixed inset-y-0 left-0 z-50 flex h-screen w-60 shrink-0 flex-col border-r border-edge bg-panel transition-transform duration-300 md:sticky md:top-0 md:z-auto md:w-16 md:translate-x-0 lg:w-60"
+         :class="mobileNav ? 'translate-x-0' : '-translate-x-full'">
+    <div class="flex items-center gap-3 px-4 py-6 md:justify-center lg:justify-start lg:px-6">
+      <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent font-display text-sm font-bold text-white shadow-[0_0_20px_#3b82f680]">A</div>
+      <div class="md:hidden lg:block">
         <p class="font-display text-sm font-semibold tracking-wide text-white">AKU</p>
         <p class="text-[11px] uppercase tracking-widest text-muted">Command Center</p>
       </div>
+      <!-- Закрыть меню на телефоне -->
+      <button @click="mobileNav = false" class="ml-auto text-muted md:hidden" aria-label="Закрыть меню">✕</button>
     </div>
 
     <nav class="mt-2 flex flex-1 flex-col gap-1 px-2 lg:px-3">
       <template x-for="item in nav" :key="item.id">
-        <button @click="setTab(item.id)"
-          class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all"
+        <button @click="setTab(item.id); mobileNav = false"
+          class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all md:justify-center md:py-2.5 lg:justify-start"
           :class="tab === item.id
             ? 'bg-accent/10 text-accent shadow-[inset_0_0_0_1px_#3b82f640]'
             : 'text-muted hover:bg-white/5 hover:text-gray-200'">
           <i :data-lucide="item.icon" class="h-[19px] w-[19px] shrink-0"></i>
-          <span class="hidden lg:inline" x-text="item.label"></span>
+          <span class="md:hidden lg:inline" x-text="item.label"></span>
         </button>
       </template>
     </nav>
 
     <div class="border-t border-edge px-3 py-4 lg:px-6">
-      <p class="hidden truncate text-xs text-muted lg:block" x-text="session?.user?.email"></p>
+      <p class="truncate text-xs text-muted md:hidden lg:block" x-text="session?.user?.email"></p>
       <button @click="signOut()"
         class="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-edge px-2 py-2 text-xs text-muted transition-colors hover:border-red-500/40 hover:text-red-400"
         title="Выйти">
         <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
-        <span class="hidden lg:inline">Выйти</span>
+        <span class="md:hidden lg:inline">Выйти</span>
       </button>
     </div>
   </aside>
 
+  <!-- Затемнение под выдвинутым меню (только телефон) -->
+  <div x-show="mobileNav" x-transition.opacity @click="mobileNav = false"
+       class="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"></div>
+
   <!-- ═══════════════ КОНТЕНТ ═══════════════ -->
-  <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10">
+  <main class="min-w-0 flex-1 px-4 py-4 sm:px-6 md:py-6 lg:px-10">
+
+    <!-- Мобильная шапка: бургер + текущий раздел -->
+    <div class="mb-4 flex items-center gap-3 md:hidden">
+      <button @click="mobileNav = true" aria-label="Меню"
+        class="rounded-xl border border-edge bg-panel p-2.5 text-muted transition-colors hover:text-white">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg>
+      </button>
+      <p class="font-display text-base font-semibold text-white"
+         x-text="(nav.find(n => n.id === tab) || {}).label"></p>
+    </div>
 
     <!-- Индикатор первичной загрузки из Supabase -->
     <div x-show="loading" x-transition.opacity
@@ -432,9 +447,9 @@
         </div>
         <div class="flex flex-wrap items-center gap-3">
           <!-- Быстрый поиск по всем полям клиента -->
-          <div class="relative">
+          <div class="relative w-full sm:w-auto">
             <input x-model="crmSearch" placeholder="Поиск: ник, имя, контакт, заметка…"
-              class="w-64 rounded-xl border border-edge bg-panel py-2.5 pl-9 pr-8 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
+              class="w-full sm:w-64 rounded-xl border border-edge bg-panel py-2.5 pl-9 pr-8 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
             <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             <button x-show="crmSearch" @click="crmSearch = ''" aria-label="Очистить поиск"
               class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted transition-colors hover:text-white">✕</button>
@@ -452,21 +467,21 @@
       </div>
 
       <!-- Фильтр по этапам воронки -->
-      <div class="mb-5 flex flex-wrap items-center gap-1 rounded-xl border border-edge bg-panel p-1">
+      <div class="mb-5 flex items-center gap-1 overflow-x-auto rounded-xl border border-edge bg-panel p-1 lg:flex-wrap">
         <button @click="crmStatusFilter = 'all'"
-          class="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+          class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
           :class="crmStatusFilter === 'all' ? 'bg-accent/15 text-accent' : 'text-muted hover:text-white'">
           Все <span x-text="'(' + crm.length + ')'"></span>
         </button>
         <template x-for="s in statusOrder" :key="s">
           <button @click="crmStatusFilter = s"
-            class="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+            class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
             :class="crmStatusFilter === s ? 'bg-accent/15 text-accent' : 'text-muted hover:text-white'">
             <span x-text="crmStatusMeta[s].label"></span>
             <span x-text="'(' + crm.filter(c => c.status === s).length + ')'"></span>
           </button>
         </template>
-        <div class="ml-auto flex items-center gap-3 px-3">
+        <div class="ml-auto flex shrink-0 items-center gap-3 px-3">
           <select x-model="crmSort"
             class="cursor-pointer rounded-lg border border-edge bg-base px-2 py-1 text-xs text-muted outline-none focus:border-accent">
             <option value="recent">Сначала свежие</option>
@@ -526,7 +541,118 @@
       </div>
 
       <!-- Таблица -->
-      <div class="overflow-x-auto rounded-2xl border border-edge bg-panel">
+      <!-- ═══ ТЕЛЕФОН: карточки вместо таблицы ═══ -->
+      <div class="space-y-3 md:hidden">
+        <template x-for="e in filteredCrm" :key="'m-' + e.id">
+          <div class="rounded-2xl border bg-panel p-4"
+               :class="e.pinned ? 'border-amber-500/30' : 'border-edge'">
+            <!-- Шапка карточки -->
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <svg x-show="e.pinned" class="h-3 w-3 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1Z"/></svg>
+                  <a :href="e.profileUrl || '#'" target="_blank" rel="noreferrer"
+                     class="truncate font-medium text-accent" x-text="e.nickname"></a>
+                </div>
+                <p x-show="e.clientName" class="mt-0.5 truncate text-sm text-white" x-text="e.clientName"></p>
+                <p x-show="e.contact" class="mt-0.5 truncate text-xs text-muted" x-text="e.contact"></p>
+              </div>
+              <span x-show="e.budget" class="shrink-0 font-display text-sm font-semibold text-neon" x-text="money(e.budget || 0)"></span>
+            </div>
+
+            <!-- Этап + дата -->
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+              <select :value="e.status" @change="setStatus(e.id, $event.target.value)"
+                class="cursor-pointer rounded-full border bg-transparent px-2.5 py-1 text-[11px] font-medium outline-none"
+                :class="crmStatusMeta[e.status].cls">
+                <template x-for="s in statusOrder" :key="'ms-' + s">
+                  <option :value="s" x-text="crmStatusMeta[s].label" class="bg-panel text-white"></option>
+                </template>
+              </select>
+              <span x-show="e.source" class="rounded-full border border-edge bg-base px-2 py-0.5 text-[10px] text-muted" x-text="e.source"></span>
+              <span class="text-[10px] text-muted" x-text="fmtDate(e.lastTouch)"></span>
+            </div>
+
+            <!-- Заметка -->
+            <p x-show="e.notes" class="mt-3 whitespace-pre-wrap text-sm text-muted" x-text="e.notes"></p>
+
+            <!-- Не сохранено -->
+            <div x-show="e.unsaved" class="mt-3 flex items-center gap-2">
+              <span class="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">не сохранён</span>
+              <button @click="retrySave(e.id)" class="rounded-full border border-edge px-2 py-0.5 text-[10px] text-muted">Повторить</button>
+            </div>
+
+            <!-- Действия: крупные кнопки под палец -->
+            <div class="mt-4 flex items-center gap-2">
+              <button @click="togglePin(e.id)"
+                class="flex-1 rounded-xl border py-2.5 text-xs transition-colors"
+                :class="e.pinned ? 'border-amber-500/40 bg-amber-500/10 text-amber-400' : 'border-edge text-muted'">
+                <span x-text="e.pinned ? 'Закреплён' : 'Закрепить'"></span>
+              </button>
+              <button @click="openFilesId = openFilesId === e.id ? null : e.id"
+                class="flex-1 rounded-xl border py-2.5 text-xs transition-colors"
+                :class="filesOf(e.id).length ? 'border-accent/40 bg-accent/10 text-accent' : 'border-edge text-muted'">
+                Файлы <span x-show="filesOf(e.id).length" x-text="'(' + filesOf(e.id).length + ')'"></span>
+              </button>
+              <button @click="startEdit(e.id)"
+                class="flex-1 rounded-xl border border-edge py-2.5 text-xs text-muted">Изменить</button>
+              <button @click="crmDeleteId = crmDeleteId === e.id ? null : e.id"
+                class="rounded-xl border border-edge px-3 py-2.5 text-xs text-muted">✕</button>
+            </div>
+
+            <!-- Подтверждение удаления -->
+            <div x-show="crmDeleteId === e.id" class="mt-2 flex items-center gap-2">
+              <span class="text-xs text-muted">Удалить клиента?</span>
+              <button @click="deleteLead(e.id)" class="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs text-red-300">Да</button>
+              <button @click="crmDeleteId = null" class="rounded-lg border border-edge px-3 py-1.5 text-xs text-muted">Нет</button>
+            </div>
+
+            <!-- Редактирование на телефоне -->
+            <div x-show="crmEditId === e.id" class="mt-3 space-y-2 border-t border-edge pt-3">
+              <input x-model="crmEdit.nickname" placeholder="@nickname"
+                class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-accent" />
+              <input x-model="crmEdit.clientName" placeholder="Имя / компания"
+                class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-accent" />
+              <input x-model="crmEdit.contact" placeholder="Контакт"
+                class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-accent" />
+              <input x-model="crmEdit.budget" placeholder="Бюджет $" inputmode="decimal"
+                class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-neon" />
+              <textarea x-model="crmEdit.notes" rows="4" placeholder="Заметка"
+                class="w-full resize-y rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-accent"></textarea>
+              <div class="flex gap-2">
+                <button @click="saveEdit()" class="flex-1 rounded-xl bg-neon py-2.5 text-xs font-semibold text-base">Сохранить</button>
+                <button @click="cancelEdit()" class="flex-1 rounded-xl border border-edge py-2.5 text-xs text-muted">Отмена</button>
+              </div>
+            </div>
+
+            <!-- Файлы на телефоне -->
+            <div x-show="openFilesId === e.id" class="mt-3 border-t border-edge pt-3">
+              <label class="block cursor-pointer rounded-xl border border-edge bg-base py-2.5 text-center text-xs text-muted">
+                <span x-text="uploading === e.id ? 'Загружаю…' : '+ Прикрепить файлы'"></span>
+                <input type="file" multiple class="hidden" @change="uploadFiles(e.id, $event)" />
+              </label>
+              <div class="mt-2 space-y-2">
+                <template x-for="f in filesOf(e.id)" :key="'mf-' + f.id">
+                  <div class="flex items-center gap-2 rounded-xl border border-edge bg-base px-3 py-2">
+                    <button @click="openFile(f)" class="min-w-0 flex-1 truncate text-left text-xs text-white" x-text="f.name"></button>
+                    <span class="shrink-0 text-[10px] text-muted" x-text="fmtSize(f.size)"></span>
+                    <button @click="deleteFile(e.id, f.id)" class="shrink-0 text-muted">✕</button>
+                  </div>
+                </template>
+                <p x-show="!filesOf(e.id).length" class="text-xs text-muted/60">Файлов пока нет</p>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <p x-show="filteredCrm.length === 0" class="rounded-2xl border border-edge bg-panel px-5 py-10 text-center text-sm text-muted/60">
+          <span x-show="crmSearch">Ничего не найдено</span>
+          <span x-show="!crmSearch && !loading">Пока ни одного клиента — нажми «+ Новый клиент»</span>
+        </p>
+      </div>
+
+      <!-- ═══ ПЛАНШЕТ И ДЕСКТОП: таблица ═══ -->
+      <div class="hidden overflow-x-auto rounded-2xl border border-edge bg-panel md:block">
         <table class="w-full min-w-[1100px] text-left text-sm">
           <thead>
             <tr class="border-b border-edge text-xs uppercase tracking-widest text-muted">
@@ -836,7 +962,7 @@
        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
     <div x-show="taskModal" x-transition:enter="transition duration-200 ease-out"
          x-transition:enter-start="scale-95 opacity-0" x-transition:enter-end="scale-100 opacity-100"
-         class="w-full max-w-md rounded-2xl border border-edge bg-panel p-6 shadow-2xl">
+         class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-edge bg-panel p-5 shadow-2xl sm:p-6">
       <div class="mb-5 flex items-center justify-between">
         <h3 class="font-display text-lg font-semibold text-white">Новая задача</h3>
         <button @click="taskModal = false" class="text-muted hover:text-white" aria-label="Закрыть">
@@ -1170,6 +1296,8 @@ document.addEventListener('alpine:init', () => {
     ],
 
     /* ══ ИНИЦИАЛИЗАЦИЯ ══ */
+    mobileNav: false,         // выдвижное меню на телефоне
+
     /* ══ АВТОРИЗАЦИЯ ══ */
     session: null,        // текущая сессия Supabase Auth
     authReady: false,     // сессия проверена (чтобы не мигала форма входа)
@@ -1195,21 +1323,6 @@ document.addEventListener('alpine:init', () => {
       await this.loadAll();
     },
 
-    async signUp() {
-      this.authBusy = true; this.authError = ''; this.authInfo = '';
-      const { data, error } = await supabase.auth.signUp({
-        email: this.authForm.email.trim(), password: this.authForm.password,
-      });
-      this.authBusy = false;
-      if (error) { this.authError = error.message; return; }
-      if (data.session) {          // подтверждение email отключено — сразу входим
-        this.session = data.session;
-        this.authForm.password = '';
-        await this.loadAll();
-      } else {                     // включено подтверждение по почте
-        this.authInfo = 'Аккаунт создан. Проверь почту и подтверди адрес, затем войди.';
-      }
-    },
 
     async signOut() {
       await supabase.auth.signOut();
