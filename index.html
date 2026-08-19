@@ -12,16 +12,20 @@
     theme: {
       extend: {
         colors: {
-          base:   '#0b0f19', // фон
-          panel:  '#111827', // карточки / сайдбар
-          edge:   '#1f2937', // границы
-          accent: '#3b82f6', // глубокий синий
-          neon:   '#10b981', // неоновый зелёный (финансы)
-          muted:  '#9ca3af', // приглушённый текст
+          base:   '#0a0d16',                 // глубокий фон / фон инпутов
+          panel:  'rgba(20,27,45,0.55)',     // стеклянные карточки (сквозь них виден градиент)
+          edge:   'rgba(255,255,255,0.09)',  // мягкие стеклянные границы
+          accent: '#6366f1',                 // индиго — основной акцент
+          accent2:'#8b5cf6',                 // фиолетовый — для градиентов
+          neon:   '#10b981',                 // зелёный — финансы
+          muted:  '#9ca3af',                 // приглушённый текст
         },
         fontFamily: {
           display: ['Space Grotesk', 'sans-serif'],
           body:    ['Inter', 'sans-serif'],
+        },
+        boxShadow: {
+          glass: '0 8px 32px rgba(0,0,0,0.37), inset 0 1px 0 rgba(255,255,255,0.06)',
         },
       },
     },
@@ -45,12 +49,51 @@
   [x-cloak] { display: none !important; }
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
   .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* ── Стекло: каждая панель размывает то, что под ней ── */
+  [class~="bg-panel"] {
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    backdrop-filter: blur(16px) saturate(150%);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.37), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+
+  /* ── Живой градиентный фон ── */
+  .aku-bg {
+    position: fixed; inset: 0; z-index: -1; overflow: hidden;
+    background:
+      radial-gradient(60rem 60rem at 12% -10%, rgba(99,102,241,0.22), transparent 60%),
+      radial-gradient(50rem 50rem at 100% 0%, rgba(139,92,246,0.18), transparent 55%),
+      radial-gradient(60rem 50rem at 50% 120%, rgba(16,185,129,0.12), transparent 55%),
+      #0a0d16;
+  }
+  .aku-bg::before, .aku-bg::after {
+    content: ''; position: absolute; border-radius: 50%; filter: blur(80px);
+    opacity: 0.5; animation: aku-float 22s ease-in-out infinite;
+  }
+  .aku-bg::before {
+    width: 34rem; height: 34rem; top: -8rem; left: -6rem;
+    background: radial-gradient(circle, rgba(99,102,241,0.5), transparent 70%);
+  }
+  .aku-bg::after {
+    width: 30rem; height: 30rem; bottom: -10rem; right: -6rem;
+    background: radial-gradient(circle, rgba(139,92,246,0.4), transparent 70%);
+    animation-delay: -11s;
+  }
+  @keyframes aku-float {
+    0%,100% { transform: translate(0,0) scale(1); }
+    50%     { transform: translate(4rem,3rem) scale(1.12); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .aku-bg::before, .aku-bg::after { animation: none; }
+  }
 </style>
 </head>
 
-<body class="bg-base font-body text-gray-200 antialiased">
+<body class="font-body text-gray-200 antialiased">
+<div class="aku-bg"></div>
 
 <div x-data="commandCenter" x-cloak>
 
@@ -62,13 +105,11 @@
   <!-- ═══════════════ ФОРМА ВХОДА ═══════════════ -->
   <div x-show="authReady && !session" x-transition.opacity
        class="flex min-h-screen items-center justify-center px-4">
-    <div class="w-full max-w-sm rounded-2xl border border-edge bg-panel p-8">
-      <div class="mb-6 flex items-center gap-3">
-        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-accent font-display text-sm font-bold text-white shadow-[0_0_20px_#3b82f680]">A</div>
-        <div>
-          <p class="font-display text-base font-semibold text-white">AKU Command Center</p>
-          <p class="text-[11px] uppercase tracking-widest text-muted">Приватный доступ</p>
-        </div>
+    <div class="w-full max-w-sm rounded-3xl border border-edge bg-panel p-8 shadow-glass">
+      <div class="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent2 font-display text-xl font-bold text-white shadow-[0_8px_30px_rgba(99,102,241,0.5)]">A</div>
+      <div class="mb-6 text-center">
+        <p class="font-display text-lg font-semibold text-white">AKU Command Center</p>
+        <p class="text-[11px] uppercase tracking-widest text-muted">Приватный доступ</p>
       </div>
 
       <label class="block text-xs font-medium uppercase tracking-widest text-muted">Email</label>
@@ -102,7 +143,7 @@
   <aside class="fixed inset-y-0 left-0 z-50 flex h-screen w-60 shrink-0 flex-col border-r border-edge bg-panel transition-transform duration-300 md:sticky md:top-0 md:z-auto md:w-16 md:translate-x-0 lg:w-60"
          :class="mobileNav ? 'translate-x-0' : '-translate-x-full'">
     <div class="flex items-center gap-3 px-4 py-6 md:justify-center lg:justify-start lg:px-6">
-      <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent font-display text-sm font-bold text-white shadow-[0_0_20px_#3b82f680]">A</div>
+      <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent font-display text-sm font-bold text-white shadow-[0_0_20px_#6366f180]">A</div>
       <div class="md:hidden lg:block">
         <p class="font-display text-sm font-semibold tracking-wide text-white">AKU</p>
         <p class="text-[11px] uppercase tracking-widest text-muted">Command Center</p>
@@ -116,7 +157,7 @@
         <button @click="setTab(item.id); mobileNav = false"
           class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all md:justify-center md:py-2.5 lg:justify-start"
           :class="tab === item.id
-            ? 'bg-accent/10 text-accent shadow-[inset_0_0_0_1px_#3b82f640]'
+            ? 'bg-gradient-to-r from-accent/25 to-accent2/10 text-white shadow-[inset_0_0_0_1px_rgba(99,102,241,0.35)]'
             : 'text-muted hover:bg-white/5 hover:text-gray-200'">
           <i :data-lucide="item.icon" class="h-[19px] w-[19px] shrink-0"></i>
           <span class="md:hidden lg:inline" x-text="item.label"></span>
@@ -154,7 +195,7 @@
 
     <!-- Индикатор первичной загрузки из Supabase -->
     <div x-show="loading" x-transition.opacity
-         class="mb-6 flex items-center gap-3 rounded-2xl border border-edge bg-panel px-5 py-3.5 text-sm text-muted">
+         class="mb-6 flex items-center gap-3 rounded-3xl border border-edge bg-panel px-5 py-3.5 text-sm text-muted">
       <span class="h-4 w-4 animate-spin rounded-full border-2 border-edge border-t-accent"></span>
       Загрузка данных из Supabase…
     </div>
@@ -171,7 +212,7 @@
     <section x-show="tab === 'dashboard'" x-transition:enter.opacity.duration.300ms class="space-y-6">
 
       <!-- Живой счётчик аудитории -->
-      <div class="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl border border-edge bg-panel px-5 py-3.5">
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-3xl border border-edge bg-panel px-5 py-3.5">
         <span class="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted">
           <span class="relative flex h-2 w-2">
             <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-neon opacity-60"></span>
@@ -183,60 +224,92 @@
           <div class="flex items-baseline gap-1.5">
             <span class="text-xs text-muted" x-text="s.label"></span>
             <span class="font-display text-sm font-semibold"
-              :style="`color:${s.accent === 'green' ? '#10b981' : '#3b82f6'}; text-shadow:0 0 14px ${s.accent === 'green' ? '#10b98166' : '#3b82f666'}`"
+              :style="`color:${s.accent === 'green' ? '#10b981' : '#6366f1'}; text-shadow:0 0 14px ${s.accent === 'green' ? '#10b98166' : '#6366f166'}`"
               x-text="s.value"></span>
           </div>
         </template>
       </div>
 
-      <div class="grid gap-6 xl:grid-cols-3">
-        <!-- Карточка цели (название и сумма — из конверта-цели в БД) -->
-        <div class="relative overflow-hidden rounded-2xl border border-edge bg-panel p-6 xl:col-span-2">
-          <div class="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full opacity-20 blur-3xl"
-               style="background: radial-gradient(circle, #10b981, transparent 70%)"></div>
-          <div class="flex items-start justify-between">
-            <div>
-              <p class="text-xs font-medium uppercase tracking-widest text-muted">Главная цель</p>
-              <h3 class="mt-1 font-display text-2xl font-bold tracking-tight text-white" x-text="goal.name"></h3>
-            </div>
-            <div class="flex h-11 w-11 items-center justify-center rounded-xl border border-neon/25 bg-neon/10 text-neon">
-              <i data-lucide="car" class="h-[22px] w-[22px]"></i>
+      <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <!-- Баланс по всем счетам -->
+        <div class="group relative overflow-hidden rounded-3xl border border-edge bg-panel p-6">
+          <div class="pointer-events-none absolute -left-16 -top-16 h-40 w-40 rounded-full bg-neon/10 blur-2xl"></div>
+          <div class="flex items-center justify-between">
+            <p class="text-xs font-medium uppercase tracking-widest text-muted">Все счета</p>
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl border border-neon/25 bg-neon/10 text-neon">
+              <i data-lucide="wallet" class="h-[18px] w-[18px]"></i>
             </div>
           </div>
-          <div class="mt-6 flex items-end justify-between">
-            <p class="font-display text-3xl font-bold text-neon" style="text-shadow:0 0 24px #10b98155" x-text="money(goal.balance)"></p>
-            <p class="text-sm text-muted">
-              из <span x-text="money(goal.target)"></span> ·
-              <span class="text-white" x-text="Math.round(goal.balance / goal.target * 100) + '%'"></span>
-            </p>
-          </div>
-          <div class="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-edge">
-            <div class="h-full rounded-full transition-all duration-700"
-                 :style="`width:${Math.min(goal.balance / goal.target * 100, 100)}%; background:linear-gradient(90deg,#10b98199,#10b981); box-shadow:0 0 12px #10b98166`"></div>
-          </div>
-          <p class="mt-3 text-sm text-muted">
-            Осталось накопить:
-            <span class="font-medium text-white" x-text="money(goal.target - goal.balance)"></span>
-          </p>
+          <p class="mt-4 font-display text-3xl font-bold text-white" x-text="money(totalBalance)"></p>
+          <p class="mt-1 text-sm text-muted"><span x-text="envelopes.length"></span> конвертов</p>
+          <button @click="setTab('finance')"
+            class="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-neon/30 bg-neon/10 px-4 py-2.5 text-sm font-semibold text-neon transition-all duration-300 hover:bg-neon/20">
+            <i data-lucide="plus" class="h-4 w-4"></i> Транзакция
+          </button>
         </div>
 
-        <!-- Быстрый баланс -->
-        <div class="flex flex-col justify-between rounded-2xl border border-edge bg-panel p-6">
-          <div>
-            <p class="text-xs font-medium uppercase tracking-widest text-muted">Все счета</p>
-            <p class="mt-2 font-display text-3xl font-bold text-white" x-text="money(totalBalance)"></p>
-            <p class="mt-1 text-sm text-muted"><span x-text="envelopes.length"></span> конвертов</p>
+        <!-- Цель BMW — компактный виджет с кольцом прогресса -->
+        <div class="relative overflow-hidden rounded-3xl border border-edge bg-panel p-6">
+          <div class="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-accent/15 blur-2xl"></div>
+          <div class="flex items-center gap-2">
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl border border-accent/25 bg-accent/10 text-accent">
+              <i data-lucide="car" class="h-[18px] w-[18px]"></i>
+            </div>
+            <div>
+              <p class="text-[11px] font-medium uppercase tracking-widest text-muted">Цель</p>
+              <p class="font-display text-sm font-semibold text-white" x-text="goal.name"></p>
+            </div>
           </div>
-          <button @click="setTab('finance')"
-            class="mt-5 flex items-center justify-center gap-2 rounded-xl bg-neon px-4 py-2.5 text-sm font-semibold text-base transition-all hover:brightness-110 hover:shadow-[0_0_24px_#10b98155]">
-            <i data-lucide="plus" class="h-4 w-4"></i> Добавить транзакцию
+          <div class="mt-4 flex items-center gap-5">
+            <!-- Кольцо прогресса -->
+            <div class="relative h-24 w-24 shrink-0">
+              <svg viewBox="0 0 100 100" class="h-24 w-24 -rotate-90">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="9"/>
+                <circle cx="50" cy="50" r="42" fill="none" stroke="url(#goalgrad)" stroke-width="9" stroke-linecap="round"
+                        :stroke-dasharray="264"
+                        :stroke-dashoffset="264 - 264 * Math.min(goal.balance / goal.target, 1)"
+                        style="transition: stroke-dashoffset .8s cubic-bezier(.22,1,.36,1)"/>
+                <defs>
+                  <linearGradient id="goalgrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#6366f1"/>
+                    <stop offset="100%" stop-color="#8b5cf6"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span class="font-display text-lg font-bold text-white" x-text="Math.round(goal.balance / goal.target * 100) + '%'"></span>
+              </div>
+            </div>
+            <div class="min-w-0">
+              <p class="font-display text-2xl font-bold text-white" x-text="money(goal.balance)"></p>
+              <p class="text-xs text-muted">из <span x-text="money(goal.target)"></span></p>
+              <p class="mt-2 text-xs text-muted">осталось</p>
+              <p class="font-display text-sm font-semibold text-accent" x-text="money(goal.target - goal.balance)"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Воронка сделок (из CRM) -->
+        <div class="relative overflow-hidden rounded-3xl border border-edge bg-panel p-6">
+          <div class="pointer-events-none absolute -right-16 -bottom-16 h-40 w-40 rounded-full bg-accent2/15 blur-2xl"></div>
+          <div class="flex items-center justify-between">
+            <p class="text-xs font-medium uppercase tracking-widest text-muted">Воронка сделок</p>
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl border border-accent2/25 bg-accent2/10 text-accent2">
+              <i data-lucide="trending-up" class="h-[18px] w-[18px]"></i>
+            </div>
+          </div>
+          <p class="mt-4 font-display text-3xl font-bold text-white" x-text="money(pipelineSum)"></p>
+          <p class="mt-1 text-sm text-muted"><span x-text="crm.length"></span> клиентов в работе</p>
+          <button @click="setTab('crm')"
+            class="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-accent/30 bg-accent/10 px-4 py-2.5 text-sm font-semibold text-accent transition-all duration-300 hover:bg-accent/20">
+            Открыть CRM →
           </button>
         </div>
       </div>
 
       <div class="grid gap-6 xl:grid-cols-2">
         <!-- Виджет последних транзакций -->
-        <div class="rounded-2xl border border-edge bg-panel p-6">
+        <div class="rounded-3xl border border-edge bg-panel p-6">
           <div class="mb-4 flex items-center justify-between">
             <h3 class="font-display text-base font-semibold text-white">Последние транзакции</h3>
             <button @click="setTab('finance')" class="text-sm text-accent hover:underline">Бухгалтерия →</button>
@@ -262,7 +335,7 @@
         </div>
 
         <!-- Виджет Threads CRM -->
-        <div class="rounded-2xl border border-edge bg-panel p-6">
+        <div class="rounded-3xl border border-edge bg-panel p-6">
           <div class="mb-4 flex items-center justify-between">
             <h3 class="font-display text-base font-semibold text-white">Threads CRM · требует действий</h3>
             <button @click="setTab('crm')" class="text-sm text-accent hover:underline">Все записи →</button>
@@ -292,14 +365,14 @@
           <p class="mt-1 text-sm text-muted">Кнопки ‹ › на карточке перемещают задачу между колонками</p>
         </div>
         <button @click="taskModal = true"
-          class="flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-all hover:brightness-110 hover:shadow-[0_0_24px_#3b82f655]">
+          class="flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-all hover:brightness-110 hover:shadow-[0_0_24px_#6366f155]">
           <i data-lucide="plus" class="h-4 w-4"></i> Добавить задачу
         </button>
       </div>
 
       <div class="grid gap-5 lg:grid-cols-3">
         <template x-for="col in columns" :key="col.id">
-          <div class="rounded-2xl border border-edge bg-panel/60 p-4">
+          <div class="rounded-3xl border border-edge bg-panel/60 p-4">
             <div class="mb-4 flex items-center justify-between px-1">
               <h3 class="font-display text-sm font-semibold uppercase tracking-widest text-muted" x-text="col.title"></h3>
               <span class="rounded-full bg-edge px-2.5 py-0.5 text-xs text-muted" x-text="tasksBy(col.id).length"></span>
@@ -348,7 +421,7 @@
       <!-- Конверты -->
       <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <template x-for="e in envelopes" :key="e.id">
-          <div class="rounded-2xl border border-edge bg-panel p-5">
+          <div class="rounded-3xl border border-edge bg-panel p-5">
             <div class="flex items-center justify-between">
               <div class="flex h-9 w-9 items-center justify-center rounded-lg border border-neon/20 bg-neon/10 text-neon" x-html="e.icon"></div>
               <span x-show="e.target" class="text-[11px] text-muted" x-text="Math.round(e.balance / (e.target || 1) * 100) + '%'"></span>
@@ -365,7 +438,7 @@
 
       <div class="grid gap-6 xl:grid-cols-5">
         <!-- Форма внесения и распределения (Вариант Б) -->
-        <div class="rounded-2xl border border-edge bg-panel p-6 xl:col-span-2">
+        <div class="rounded-3xl border border-edge bg-panel p-6 xl:col-span-2">
           <h3 class="font-display text-base font-semibold text-white">Внести платёж</h3>
           <p class="mt-1 text-sm text-muted">Укажи сумму и распредели её по конвертам вручную.</p>
 
@@ -403,7 +476,7 @@
         </div>
 
         <!-- Транзакции с фильтром -->
-        <div class="rounded-2xl border border-edge bg-panel p-6 xl:col-span-3">
+        <div class="rounded-3xl border border-edge bg-panel p-6 xl:col-span-3">
           <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h3 class="font-display text-base font-semibold text-white">Последние транзакции</h3>
             <div class="flex items-center gap-1 rounded-xl border border-edge bg-base p-1">
@@ -460,7 +533,7 @@
             ⭳ Выгрузить CSV
           </button>
           <button @click="crmFormOpen = !crmFormOpen"
-            class="flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:brightness-110 hover:shadow-[0_0_24px_#3b82f655]">
+            class="flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:brightness-110 hover:shadow-[0_0_24px_#6366f155]">
             <span x-text="crmFormOpen ? '✕ Закрыть' : '+ Новый клиент'"></span>
           </button>
         </div>
@@ -496,7 +569,7 @@
 
       <!-- Форма добавления клиента (остаётся открытой для ввода подряд) -->
       <div x-show="crmFormOpen" x-transition
-           class="mb-5 rounded-2xl border border-edge bg-panel p-5">
+           class="mb-5 rounded-3xl border border-edge bg-panel p-5">
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <input x-ref="crmNick" x-model="crmForm.nickname" placeholder="@nickname *"
             @keydown.enter="addCrm()"
@@ -645,14 +718,14 @@
           </div>
         </template>
 
-        <p x-show="filteredCrm.length === 0" class="rounded-2xl border border-edge bg-panel px-5 py-10 text-center text-sm text-muted/60">
+        <p x-show="filteredCrm.length === 0" class="rounded-3xl border border-edge bg-panel px-5 py-10 text-center text-sm text-muted/60">
           <span x-show="crmSearch">Ничего не найдено</span>
           <span x-show="!crmSearch && !loading">Пока ни одного клиента — нажми «+ Новый клиент»</span>
         </p>
       </div>
 
       <!-- ═══ ПЛАНШЕТ И ДЕСКТОП: таблица ═══ -->
-      <div class="hidden overflow-x-auto rounded-2xl border border-edge bg-panel md:block">
+      <div class="hidden overflow-x-auto rounded-3xl border border-edge bg-panel md:block">
         <table class="w-full min-w-[1100px] text-left text-sm">
           <thead>
             <tr class="border-b border-edge text-xs uppercase tracking-widest text-muted">
@@ -865,7 +938,7 @@
       </div>
 
       <template x-for="site in analytics" :key="site.id">
-        <div class="rounded-2xl border border-edge bg-panel p-6">
+        <div class="rounded-3xl border border-edge bg-panel p-6">
           <!-- Шапка проекта: название, тип, кнопки быстрой навигации -->
           <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -962,7 +1035,7 @@
        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
     <div x-show="taskModal" x-transition:enter="transition duration-200 ease-out"
          x-transition:enter-start="scale-95 opacity-0" x-transition:enter-end="scale-100 opacity-100"
-         class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-edge bg-panel p-5 shadow-2xl sm:p-6">
+         class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-edge bg-panel p-5 shadow-2xl sm:p-6">
       <div class="mb-5 flex items-center justify-between">
         <h3 class="font-display text-lg font-semibold text-white">Новая задача</h3>
         <button @click="taskModal = false" class="text-muted hover:text-white" aria-label="Закрыть">
@@ -1193,7 +1266,7 @@ document.addEventListener('alpine:init', () => {
       },
       {
         id: 'media', name: 'AKU Media', kind: 'web',
-        kindLabel: 'Сайт + Telegram-канал', color: '#3b82f6',
+        kindLabel: 'Сайт + Telegram-канал', color: '#6366f1',
         seriesLabel: 'Сессии (14 дн.)', distLabel: 'Источники трафика',
         resources: [
           { label: 'Сайт',     url: 'https://akumedia.github.io/AKU-Media/' },
@@ -1233,7 +1306,7 @@ document.addEventListener('alpine:init', () => {
       },
       {
         id: 'jobshub', name: 'AKU Jobs Hub', kind: 'web',
-        kindLabel: 'Сайт + Telegram-бот + канал', color: '#3b82f6',
+        kindLabel: 'Сайт + Telegram-бот + канал', color: '#6366f1',
         seriesLabel: 'Сессии (14 дн.)', distLabel: 'Источники трафика',
         resources: [
           { label: 'Сайт',   url: 'https://akumedia.github.io/AKU-Jobs-Hub-Website/' },
