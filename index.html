@@ -686,6 +686,27 @@
             class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-neon px-4 py-3 text-sm font-semibold text-base transition-all hover:brightness-110 hover:shadow-[0_0_24px_#10b98155] disabled:cursor-not-allowed disabled:opacity-40">
             <i data-lucide="check" class="h-4 w-4"></i> Распределить
           </button>
+
+          <!-- 🎁 Напоминание из хотелок: всё распределено, а баланс покрывает покупку -->
+          <template x-if="amountNum > 0 && remaining === 0 && affordableWish(totalBalance)">
+            <div class="mt-4 rounded-2xl border border-accent/30 bg-accent/5 p-4">
+              <div class="flex items-center gap-2">
+                <svg class="h-4 w-4 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
+                <p class="text-xs font-medium uppercase tracking-widest text-accent">Можешь купить прямо сейчас</p>
+              </div>
+              <p class="mt-2 font-display text-base font-semibold text-ink" x-text="affordableWish(totalBalance).title"></p>
+              <div class="mt-1 flex items-center gap-2">
+                <span class="font-display text-lg font-bold text-accent" x-text="fmtPrice(affordableWish(totalBalance))"></span>
+                <span class="rounded-full border px-2 py-0.5 text-[10px] font-medium" :class="prioMeta[affordableWish(totalBalance).priority].cls" x-text="prioMeta[affordableWish(totalBalance).priority].label"></span>
+              </div>
+              <p class="mt-2 text-xs text-muted">На счетах <span class="font-semibold text-ink" x-text="money(Math.round(totalBalance))"></span> — хватает на эту покупку из твоего списка.</p>
+              <div class="mt-3 flex items-center gap-2">
+                <a x-show="affordableWish(totalBalance).url" :href="affordableWish(totalBalance).url" target="_blank" rel="noreferrer"
+                   class="rounded-lg border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent/20">Открыть товар</a>
+                <button @click="setTab('wishlist')" class="rounded-lg border border-edge px-3 py-1.5 text-xs text-muted transition-colors hover:text-ink">Все хотелки →</button>
+              </div>
+            </div>
+          </template>
         </div>
 
         <!-- Транзакции с фильтром -->
@@ -1869,6 +1890,16 @@ document.addEventListener('alpine:init', () => {
     },
     get wishTotal() {
       return this.wishlist.filter((w) => !w.bought).reduce((s, w) => s + (Number(w.price) || 0), 0);
+    },
+    /** Что можно купить на свободный остаток. Берём самую важную
+        (по приоритету, при равенстве — дороже) хотелку, чью цену
+        покрывает баланс. Валюты сравниваем как числа. */
+    affordableWish(budget) {
+      if (!budget || budget <= 0) return null;
+      const list = this.wishlist
+        .filter((w) => !w.bought && w.price && Number(w.price) <= budget)
+        .sort((a, b) => (b.priority - a.priority) || (b.price - a.price));
+      return list[0] || null;
     },
     fmtPrice(w) {
       if (w.price == null || w.price === '') return '';
