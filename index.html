@@ -12,20 +12,22 @@
     theme: {
       extend: {
         colors: {
-          base:   '#0a0d16',                 // глубокий фон / фон инпутов
-          panel:  'rgba(20,27,45,0.55)',     // стеклянные карточки (сквозь них виден градиент)
-          edge:   'rgba(255,255,255,0.09)',  // мягкие стеклянные границы
-          accent: '#6366f1',                 // индиго — основной акцент
-          accent2:'#8b5cf6',                 // фиолетовый — для градиентов
-          neon:   '#10b981',                 // зелёный — финансы
-          muted:  '#9ca3af',                 // приглушённый текст
+          base:   'rgb(var(--base) / <alpha-value>)',   // фон инпутов / глубокий фон
+          panel:  'var(--panel-c)',                      // стеклянные карточки (rgba)
+          edge:   'var(--edge-c)',                        // границы (rgba)
+          ink:    'rgb(var(--ink) / <alpha-value>)',      // основной текст
+          ink2:   'rgb(var(--ink2) / <alpha-value>)',     // вторичный текст
+          accent: 'rgb(var(--gold) / <alpha-value>)',     // золото — основной акцент
+          accent2:'rgb(var(--gold2) / <alpha-value>)',    // тёмное золото
+          neon:   'rgb(var(--neon) / <alpha-value>)',     // зелёный — финансы
+          muted:  'rgb(var(--muted) / <alpha-value>)',    // приглушённый текст
         },
         fontFamily: {
           display: ['Space Grotesk', 'sans-serif'],
           body:    ['Inter', 'sans-serif'],
         },
         boxShadow: {
-          glass: '0 8px 32px rgba(0,0,0,0.37), inset 0 1px 0 rgba(255,255,255,0.06)',
+          glass: 'var(--glass-shadow)',
         },
       },
     },
@@ -46,28 +48,68 @@
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
 <style>
+  /* ══ ТЕМЫ: тёмная (по умолчанию) и светлая ══ */
+  :root {
+    --base: 10 13 22;
+    --ink: 245 246 250;
+    --ink2: 205 210 220;
+    --muted: 156 163 175;
+    --gold: 212 175 55;         /* #D4AF37 тёплое золото */
+    --gold2: 176 141 30;
+    --neon: 16 185 129;
+    --panel-c: rgba(22,26,38,0.55);
+    --edge-c: rgba(212,175,55,0.14);
+    --glass-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+    --scroll: rgba(255,255,255,0.14);
+    --bg-1: rgba(212,175,55,0.18);
+    --bg-2: rgba(212,175,55,0.10);
+    --bg-3: rgba(255,255,255,0.04);
+    --bg-solid: #0a0d16;
+    --blob-1: rgba(212,175,55,0.35);
+    --blob-2: rgba(176,141,30,0.28);
+  }
+  [data-theme="light"] {
+    --base: 248 247 244;
+    --ink: 24 24 27;
+    --ink2: 63 63 70;
+    --muted: 113 113 122;
+    --gold: 168 133 20;         /* золото поглубже для контраста на белом */
+    --gold2: 140 108 14;
+    --neon: 5 150 105;
+    --panel-c: rgba(255,255,255,0.62);
+    --edge-c: rgba(24,24,27,0.12);
+    --glass-shadow: 0 8px 32px rgba(120,110,60,0.12), inset 0 1px 0 rgba(255,255,255,0.7);
+    --scroll: rgba(0,0,0,0.18);
+    --bg-1: rgba(212,175,55,0.22);
+    --bg-2: rgba(212,175,55,0.12);
+    --bg-3: rgba(0,0,0,0.02);
+    --bg-solid: #f5f3ee;
+    --blob-1: rgba(212,175,55,0.4);
+    --blob-2: rgba(230,200,126,0.35);
+  }
+
   [x-cloak] { display: none !important; }
+  html { background: var(--bg-solid); }
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 8px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+  ::-webkit-scrollbar-thumb { background: var(--scroll); border-radius: 8px; }
   .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
   /* ── Стекло: каждая панель размывает то, что под ней ── */
   [class~="bg-panel"] {
     -webkit-backdrop-filter: blur(16px) saturate(150%);
     backdrop-filter: blur(16px) saturate(150%);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.37), inset 0 1px 0 rgba(255,255,255,0.06);
+    box-shadow: var(--glass-shadow);
   }
 
-  /* ── Живой градиентный фон ── */
+  /* ── Живой градиентный фон (золото) ── */
   .aku-bg {
     position: fixed; inset: 0; z-index: -1; overflow: hidden;
     background:
-      radial-gradient(60rem 60rem at 12% -10%, rgba(99,102,241,0.22), transparent 60%),
-      radial-gradient(50rem 50rem at 100% 0%, rgba(139,92,246,0.18), transparent 55%),
-      radial-gradient(60rem 50rem at 50% 120%, rgba(16,185,129,0.12), transparent 55%),
-      #0a0d16;
+      radial-gradient(60rem 60rem at 12% -10%, var(--bg-1), transparent 60%),
+      radial-gradient(50rem 50rem at 100% 0%, var(--bg-2), transparent 55%),
+      radial-gradient(60rem 50rem at 50% 120%, var(--bg-3), transparent 55%),
+      var(--bg-solid);
   }
   .aku-bg::before, .aku-bg::after {
     content: ''; position: absolute; border-radius: 50%; filter: blur(80px);
@@ -75,11 +117,11 @@
   }
   .aku-bg::before {
     width: 34rem; height: 34rem; top: -8rem; left: -6rem;
-    background: radial-gradient(circle, rgba(99,102,241,0.5), transparent 70%);
+    background: radial-gradient(circle, var(--blob-1), transparent 70%);
   }
   .aku-bg::after {
     width: 30rem; height: 30rem; bottom: -10rem; right: -6rem;
-    background: radial-gradient(circle, rgba(139,92,246,0.4), transparent 70%);
+    background: radial-gradient(circle, var(--blob-2), transparent 70%);
     animation-delay: -11s;
   }
   @keyframes aku-float {
@@ -92,7 +134,8 @@
 </style>
 </head>
 
-<body class="font-body text-gray-200 antialiased">
+<body class="font-body text-ink2 antialiased">
+<div class="aku-bg"></div>
 <div class="aku-bg"></div>
 
 <div x-data="commandCenter" x-cloak>
@@ -106,27 +149,27 @@
   <div x-show="authReady && !session" x-transition.opacity
        class="flex min-h-screen items-center justify-center px-4">
     <div class="w-full max-w-sm rounded-3xl border border-edge bg-panel p-8 shadow-glass">
-      <div class="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent2 font-display text-xl font-bold text-white shadow-[0_8px_30px_rgba(99,102,241,0.5)]">A</div>
+      <div class="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent2 font-display text-xl font-bold text-ink shadow-[0_8px_30px_rgba(212,175,55,0.5)]">A</div>
       <div class="mb-6 text-center">
-        <p class="font-display text-lg font-semibold text-white">AKU Command Center</p>
+        <p class="font-display text-lg font-semibold text-ink">AKU Command Center</p>
         <p class="text-[11px] uppercase tracking-widest text-muted">Приватный доступ</p>
       </div>
 
       <label class="block text-xs font-medium uppercase tracking-widest text-muted">Email</label>
       <input x-model="authForm.email" type="email" autocomplete="email"
         @keydown.enter="signIn()"
-        class="mt-1.5 w-full rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
+        class="mt-1.5 w-full rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
 
       <label class="mt-4 block text-xs font-medium uppercase tracking-widest text-muted">Пароль</label>
       <input x-model="authForm.password" type="password" autocomplete="current-password"
         @keydown.enter="signIn()"
-        class="mt-1.5 w-full rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
+        class="mt-1.5 w-full rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
 
       <p x-show="authError" class="mt-3 rounded-xl border border-red-500/25 bg-red-500/10 px-3 py-2 text-xs text-red-300" x-text="authError"></p>
       <p x-show="authInfo" class="mt-3 rounded-xl border border-neon/25 bg-neon/10 px-3 py-2 text-xs text-neon" x-text="authInfo"></p>
 
       <button @click="signIn()" :disabled="authBusy || !authForm.email || !authForm.password"
-        class="mt-5 w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition-all duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40">
+        class="mt-5 w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink transition-all duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40">
         <span x-text="authBusy ? 'Проверяю…' : 'Войти'"></span>
       </button>
 
@@ -137,22 +180,22 @@
   <div x-show="authReady && session && !aalOk" x-transition.opacity
        class="flex min-h-screen items-center justify-center px-4">
     <div class="w-full max-w-sm rounded-3xl border border-edge bg-panel p-8 shadow-glass">
-      <div class="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent2 text-white shadow-[0_8px_30px_rgba(99,102,241,0.5)]">
+      <div class="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent2 text-ink shadow-[0_8px_30px_rgba(212,175,55,0.5)]">
         <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       </div>
       <div class="mb-6 text-center">
-        <p class="font-display text-lg font-semibold text-white">Подтверждение входа</p>
+        <p class="font-display text-lg font-semibold text-ink">Подтверждение входа</p>
         <p class="mt-1 text-xs text-muted">Введи 6-значный код из приложения-аутентификатора</p>
       </div>
       <input x-model="mfaCode" inputmode="numeric" maxlength="6" placeholder="000000"
         @keydown.enter="verifyMfaLogin()"
-        class="w-full rounded-xl border border-edge bg-base px-4 py-3 text-center font-display text-2xl tracking-[0.3em] text-white outline-none focus:border-accent" />
+        class="w-full rounded-xl border border-edge bg-base px-4 py-3 text-center font-display text-2xl tracking-[0.3em] text-ink outline-none focus:border-accent" />
       <p x-show="mfaError" class="mt-3 rounded-xl border border-red-500/25 bg-red-500/10 px-3 py-2 text-xs text-red-300" x-text="mfaError"></p>
       <button @click="verifyMfaLogin()" :disabled="mfaBusy || mfaCode.length < 6"
-        class="mt-5 w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition-all duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40">
+        class="mt-5 w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink transition-all duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40">
         <span x-text="mfaBusy ? 'Проверяю…' : 'Подтвердить'"></span>
       </button>
-      <button @click="signOut()" class="mt-2 w-full rounded-xl border border-edge px-4 py-2.5 text-xs text-muted transition-colors hover:text-white">
+      <button @click="signOut()" class="mt-2 w-full rounded-xl border border-edge px-4 py-2.5 text-xs text-muted transition-colors hover:text-ink">
         Отмена, выйти
       </button>
     </div>
@@ -165,9 +208,9 @@
   <aside class="fixed inset-y-0 left-0 z-50 flex h-screen w-60 shrink-0 flex-col border-r border-edge bg-panel transition-transform duration-300 md:sticky md:top-0 md:z-auto md:w-16 md:translate-x-0 lg:w-60"
          :class="mobileNav ? 'translate-x-0' : '-translate-x-full'">
     <div class="flex items-center gap-3 px-4 py-6 md:justify-center lg:justify-start lg:px-6">
-      <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent font-display text-sm font-bold text-white shadow-[0_0_20px_#6366f180]">A</div>
+      <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent font-display text-sm font-bold text-ink shadow-[0_0_20px_#D4AF3780]">A</div>
       <div class="md:hidden lg:block">
-        <p class="font-display text-sm font-semibold tracking-wide text-white">AKU</p>
+        <p class="font-display text-sm font-semibold tracking-wide text-ink">AKU</p>
         <p class="text-[11px] uppercase tracking-widest text-muted">Command Center</p>
       </div>
       <!-- Закрыть меню на телефоне -->
@@ -179,8 +222,8 @@
         <button @click="setTab(item.id); mobileNav = false"
           class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all md:justify-center md:py-2.5 lg:justify-start"
           :class="tab === item.id
-            ? 'bg-gradient-to-r from-accent/25 to-accent2/10 text-white shadow-[inset_0_0_0_1px_rgba(99,102,241,0.35)]'
-            : 'text-muted hover:bg-white/5 hover:text-gray-200'">
+            ? 'bg-gradient-to-r from-accent/25 to-accent2/10 text-ink shadow-[inset_0_0_0_1px_rgba(212,175,55,0.4)]'
+            : 'text-muted hover:bg-ink/5 hover:text-ink'">
           <i :data-lucide="item.icon" class="h-[19px] w-[19px] shrink-0"></i>
           <span class="md:hidden lg:inline" x-text="item.label"></span>
         </button>
@@ -189,6 +232,14 @@
 
     <div class="border-t border-edge px-3 py-4 lg:px-6">
       <p class="truncate text-xs text-muted md:hidden lg:block" x-text="session?.user?.email"></p>
+      <!-- Переключатель темы -->
+      <button @click="toggleTheme()"
+        class="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-edge px-2 py-2 text-xs text-muted transition-colors hover:text-ink"
+        title="Сменить тему">
+        <svg x-show="theme === 'dark'" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg x-show="theme === 'light'" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        <span class="md:hidden lg:inline" x-text="theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'"></span>
+      </button>
       <!-- Безопасность / 2FA -->
       <button @click="securityOpen = true; loadFactors()"
         class="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border px-2 py-2 text-xs transition-colors"
@@ -216,10 +267,10 @@
     <!-- Мобильная шапка: бургер + текущий раздел -->
     <div class="mb-4 flex items-center gap-3 md:hidden">
       <button @click="mobileNav = true" aria-label="Меню"
-        class="rounded-xl border border-edge bg-panel p-2.5 text-muted transition-colors hover:text-white">
+        class="rounded-xl border border-edge bg-panel p-2.5 text-muted transition-colors hover:text-ink">
         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg>
       </button>
-      <p class="font-display text-base font-semibold text-white"
+      <p class="font-display text-base font-semibold text-ink"
          x-text="(nav.find(n => n.id === tab) || {}).label"></p>
     </div>
 
@@ -254,7 +305,7 @@
           <div class="flex items-baseline gap-1.5">
             <span class="text-xs text-muted" x-text="s.label"></span>
             <span class="font-display text-sm font-semibold"
-              :style="`color:${s.accent === 'green' ? '#10b981' : '#6366f1'}; text-shadow:0 0 14px ${s.accent === 'green' ? '#10b98166' : '#6366f166'}`"
+              :style="`color:${s.accent === 'green' ? '#10b981' : '#D4AF37'}; text-shadow:0 0 14px ${s.accent === 'green' ? '#10b98166' : '#D4AF3766'}`"
               x-text="s.value"></span>
           </div>
         </template>
@@ -262,7 +313,7 @@
           <span x-show="statsError" class="text-[11px] text-amber-400/80" x-text="statsError"></span>
           <span x-show="statsUpdated && !statsError" class="text-[11px] text-muted/60">обновлено <span x-text="statsUpdated"></span></span>
           <button @click="loadLiveStats()" :disabled="statsLoading" title="Обновить"
-            class="rounded-lg border border-edge p-1.5 text-muted transition-colors hover:text-white disabled:opacity-40">
+            class="rounded-lg border border-edge p-1.5 text-muted transition-colors hover:text-ink disabled:opacity-40">
             <svg class="h-3.5 w-3.5" :class="statsLoading && 'animate-spin'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
           </button>
         </div>
@@ -278,7 +329,7 @@
               <i data-lucide="wallet" class="h-[18px] w-[18px]"></i>
             </div>
           </div>
-          <p class="mt-4 font-display text-3xl font-bold text-white" x-text="money(totalBalance)"></p>
+          <p class="mt-4 font-display text-3xl font-bold text-ink" x-text="money(totalBalance)"></p>
           <p class="mt-1 text-sm text-muted"><span x-text="envelopes.length"></span> конвертов</p>
           <button @click="setTab('finance')"
             class="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-neon/30 bg-neon/10 px-4 py-2.5 text-sm font-semibold text-neon transition-all duration-300 hover:bg-neon/20">
@@ -295,7 +346,7 @@
             </div>
             <div>
               <p class="text-[11px] font-medium uppercase tracking-widest text-muted">Цель</p>
-              <p class="font-display text-sm font-semibold text-white" x-text="goal.name"></p>
+              <p class="font-display text-sm font-semibold text-ink" x-text="goal.name"></p>
             </div>
           </div>
           <div class="mt-4 flex items-center gap-5">
@@ -309,17 +360,17 @@
                         style="transition: stroke-dashoffset .8s cubic-bezier(.22,1,.36,1)"/>
                 <defs>
                   <linearGradient id="goalgrad" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stop-color="#6366f1"/>
+                    <stop offset="0%" stop-color="#D4AF37"/>
                     <stop offset="100%" stop-color="#8b5cf6"/>
                   </linearGradient>
                 </defs>
               </svg>
               <div class="absolute inset-0 flex flex-col items-center justify-center">
-                <span class="font-display text-lg font-bold text-white" x-text="Math.round(goal.balance / goal.target * 100) + '%'"></span>
+                <span class="font-display text-lg font-bold text-ink" x-text="Math.round(goal.balance / goal.target * 100) + '%'"></span>
               </div>
             </div>
             <div class="min-w-0">
-              <p class="font-display text-2xl font-bold text-white" x-text="money(goal.balance)"></p>
+              <p class="font-display text-2xl font-bold text-ink" x-text="money(goal.balance)"></p>
               <p class="text-xs text-muted">из <span x-text="money(goal.target)"></span></p>
               <p class="mt-2 text-xs text-muted">осталось</p>
               <p class="font-display text-sm font-semibold text-accent" x-text="money(goal.target - goal.balance)"></p>
@@ -336,7 +387,7 @@
               <i data-lucide="trending-up" class="h-[18px] w-[18px]"></i>
             </div>
           </div>
-          <p class="mt-4 font-display text-3xl font-bold text-white" x-text="money(pipelineSum)"></p>
+          <p class="mt-4 font-display text-3xl font-bold text-ink" x-text="money(pipelineSum)"></p>
           <p class="mt-1 text-sm text-muted"><span x-text="crm.length"></span> клиентов в работе</p>
           <button @click="setTab('crm')"
             class="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-accent/30 bg-accent/10 px-4 py-2.5 text-sm font-semibold text-accent transition-all duration-300 hover:bg-accent/20">
@@ -353,14 +404,14 @@
             <div class="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-500/25 bg-amber-500/10 text-amber-400">
               <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
             </div>
-            <h3 class="font-display text-base font-semibold text-white">Пора написать</h3>
+            <h3 class="font-display text-base font-semibold text-ink">Пора написать</h3>
             <span x-show="dueReminders.length" class="ml-auto rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-400" x-text="dueReminders.length"></span>
           </div>
           <div class="space-y-2">
             <template x-for="e in dueReminders.slice(0, 5)" :key="'r-' + e.id">
               <button @click="setTab('crm'); crmSearch = e.nickname"
                 class="flex w-full items-center justify-between rounded-xl border border-edge bg-base/40 px-3 py-2 text-left transition-colors hover:border-amber-500/30">
-                <span class="truncate text-sm text-white" x-text="e.nickname"></span>
+                <span class="truncate text-sm text-ink" x-text="e.nickname"></span>
                 <span class="shrink-0 text-xs text-amber-400" x-text="fmtDate(e.nextTouch)"></span>
               </button>
             </template>
@@ -370,24 +421,24 @@
 
         <!-- Деньги за месяц -->
         <div class="rounded-3xl border border-edge bg-panel p-6">
-          <h3 class="mb-4 font-display text-base font-semibold text-white">Этот месяц</h3>
+          <h3 class="mb-4 font-display text-base font-semibold text-ink">Этот месяц</h3>
           <p class="text-xs text-muted">Доход</p>
           <p class="font-display text-2xl font-bold text-neon" x-text="money(monthIncome)"></p>
           <div class="mt-4 grid grid-cols-2 gap-3">
             <div class="rounded-xl border border-edge bg-base/40 p-3">
               <p class="text-xs text-muted">Средний чек</p>
-              <p class="mt-0.5 font-display text-base font-semibold text-white" x-text="money(avgCheck)"></p>
+              <p class="mt-0.5 font-display text-base font-semibold text-ink" x-text="money(avgCheck)"></p>
             </div>
             <div class="rounded-xl border border-edge bg-base/40 p-3">
               <p class="text-xs text-muted">Конверсия</p>
-              <p class="mt-0.5 font-display text-base font-semibold text-white" x-text="conversion + '%'"></p>
+              <p class="mt-0.5 font-display text-base font-semibold text-ink" x-text="conversion + '%'"></p>
             </div>
           </div>
         </div>
 
         <!-- Доход по месяцам (мини-график) -->
         <div class="rounded-3xl border border-edge bg-panel p-6">
-          <h3 class="mb-4 font-display text-base font-semibold text-white">Доход, 6 мес.</h3>
+          <h3 class="mb-4 font-display text-base font-semibold text-ink">Доход, 6 мес.</h3>
           <div class="flex h-28 items-end gap-2">
             <template x-for="(m, i) in incomeByMonth" :key="'im-' + i">
               <div class="flex flex-1 flex-col items-center gap-1.5">
@@ -407,7 +458,7 @@
         <!-- Виджет последних транзакций -->
         <div class="rounded-3xl border border-edge bg-panel p-6">
           <div class="mb-4 flex items-center justify-between">
-            <h3 class="font-display text-base font-semibold text-white">Последние транзакции</h3>
+            <h3 class="font-display text-base font-semibold text-ink">Последние транзакции</h3>
             <button @click="setTab('finance')" class="text-sm text-accent hover:underline">Бухгалтерия →</button>
           </div>
           <div class="divide-y divide-edge">
@@ -420,10 +471,10 @@
                   <svg x-show="t.type !== 'income'" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
                 </div>
                 <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm font-medium text-white" x-text="t.type === 'income' ? t.note : '→ ' + t.envelopeName"></p>
+                  <p class="truncate text-sm font-medium text-ink" x-text="t.type === 'income' ? t.note : '→ ' + t.envelopeName"></p>
                   <p class="text-xs text-muted" x-text="fmtDate(t.date)"></p>
                 </div>
-                <span class="font-display text-sm font-semibold" :class="t.type === 'income' ? 'text-neon' : 'text-gray-300'"
+                <span class="font-display text-sm font-semibold" :class="t.type === 'income' ? 'text-neon' : 'text-ink2'"
                       x-text="(t.type === 'income' ? '+' : '') + money(t.amount)"></span>
               </div>
             </template>
@@ -433,14 +484,14 @@
         <!-- Виджет Threads CRM -->
         <div class="rounded-3xl border border-edge bg-panel p-6">
           <div class="mb-4 flex items-center justify-between">
-            <h3 class="font-display text-base font-semibold text-white">Клиенты · требуют действий</h3>
+            <h3 class="font-display text-base font-semibold text-ink">Клиенты · требуют действий</h3>
             <button @click="setTab('crm')" class="text-sm text-accent hover:underline">Все записи →</button>
           </div>
           <div class="grid gap-3 sm:grid-cols-2">
             <template x-for="e in crm.slice(0, 4)" :key="e.id">
               <div class="rounded-xl border border-edge bg-base p-4">
                 <div class="flex items-center justify-between">
-                  <span class="font-medium text-white" x-text="e.nickname"></span>
+                  <span class="font-medium text-ink" x-text="e.nickname"></span>
                   <span class="text-xs text-muted" x-text="fmtDate(e.lastTouch)"></span>
                 </div>
                 <span class="mt-2 inline-block rounded-full border px-2.5 py-0.5 text-[11px] font-medium"
@@ -457,11 +508,11 @@
     <section x-show="tab === 'tasks'" x-transition:enter.opacity.duration.300ms>
       <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 class="font-display text-xl font-semibold tracking-tight text-white">Задачи</h2>
+          <h2 class="font-display text-xl font-semibold tracking-tight text-ink">Задачи</h2>
           <p class="mt-1 text-sm text-muted">Кнопки ‹ › на карточке перемещают задачу между колонками</p>
         </div>
         <button @click="taskModal = true"
-          class="flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-all hover:brightness-110 hover:shadow-[0_0_24px_#6366f155]">
+          class="flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-ink transition-all hover:brightness-110 hover:shadow-[0_0_24px_#D4AF3755]">
           <i data-lucide="plus" class="h-4 w-4"></i> Добавить задачу
         </button>
       </div>
@@ -477,21 +528,21 @@
               <template x-for="t in tasksBy(col.id)" :key="t.id">
                 <div class="group rounded-xl border border-edge bg-panel p-4 transition-colors hover:border-accent/40">
                   <div class="flex items-start justify-between gap-2">
-                    <p class="font-medium text-white" :class="t.status === 'done' && 'line-through opacity-50'" x-text="t.title"></p>
+                    <p class="font-medium text-ink" :class="t.status === 'done' && 'line-through opacity-50'" x-text="t.title"></p>
                     <div class="flex shrink-0 gap-1 opacity-40 transition-opacity group-hover:opacity-100">
                       <button @click="moveTask(t.id, -1)" :disabled="t.status === 'todo'" aria-label="Переместить назад"
-                        class="rounded-lg border border-edge p-1 text-muted hover:text-white disabled:opacity-30">
+                        class="rounded-lg border border-edge p-1 text-muted hover:text-ink disabled:opacity-30">
                         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                       </button>
                       <button @click="moveTask(t.id, 1)" :disabled="t.status === 'done'" aria-label="Переместить вперёд"
-                        class="rounded-lg border border-edge p-1 text-muted hover:text-white disabled:opacity-30">
+                        class="rounded-lg border border-edge p-1 text-muted hover:text-ink disabled:opacity-30">
                         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                       </button>
                     </div>
                   </div>
                   <p class="mt-1.5 text-sm text-muted" x-text="t.description"></p>
                   <div class="mt-3 flex flex-wrap items-center gap-2">
-                    <span class="rounded-full border border-edge bg-base px-2.5 py-0.5 text-[11px] font-medium text-gray-300" x-text="t.project"></span>
+                    <span class="rounded-full border border-edge bg-base px-2.5 py-0.5 text-[11px] font-medium text-ink2" x-text="t.project"></span>
                     <span class="rounded-full border px-2.5 py-0.5 text-[11px] font-medium"
                           :class="priorityMeta[t.priority].cls" x-text="priorityMeta[t.priority].label"></span>
                   </div>
@@ -510,7 +561,7 @@
     <!-- ─────────── 3. БУХГАЛТЕРИЯ ─────────── -->
     <section x-show="tab === 'finance'" x-transition:enter.opacity.duration.300ms class="space-y-6">
       <div>
-        <h2 class="font-display text-xl font-semibold tracking-tight text-white">Бухгалтерия</h2>
+        <h2 class="font-display text-xl font-semibold tracking-tight text-ink">Бухгалтерия</h2>
         <p class="mt-1 text-sm text-muted">Система конвертов: платёж → ручное распределение по счетам</p>
       </div>
 
@@ -523,7 +574,7 @@
               <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M9.5 9.5h4a2 2 0 0 1 0 4h-4v-5m0 5v3m0-8V6.5m2 0V8m0 8v1.5"/></svg>
             </div>
             <div>
-              <p class="font-display text-base font-semibold text-white">Крипто-кошелёк · Фонд BMW</p>
+              <p class="font-display text-base font-semibold text-ink">Крипто-кошелёк · Фонд BMW</p>
               <p class="text-xs text-muted">Живые цены обновляются автоматически</p>
             </div>
           </div>
@@ -538,7 +589,7 @@
           <div>
             <label class="mb-1 block text-[11px] text-muted">Актив</label>
             <select x-model="cryptoForm.asset"
-              class="rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-accent2">
+              class="rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-accent2">
               <template x-for="tk in Object.keys(cryptoIds)" :key="tk">
                 <option :value="tk" x-text="tk"></option>
               </template>
@@ -547,14 +598,14 @@
           <div class="flex-1">
             <label class="mb-1 block text-[11px] text-muted">Количество</label>
             <input x-model="cryptoForm.amount" inputmode="decimal" placeholder="0.00" @keydown.enter="addCrypto()"
-              class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-accent2" />
+              class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-accent2" />
           </div>
           <button @click="addCrypto()" :disabled="!cryptoForm.amount"
-            class="rounded-xl bg-accent2 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:brightness-110 disabled:opacity-40">
+            class="rounded-xl bg-accent2 px-5 py-2.5 text-sm font-semibold text-ink transition-all hover:brightness-110 disabled:opacity-40">
             Добавить
           </button>
           <button @click="loadCryptoPrices()" :disabled="cryptoLoading" title="Обновить цены"
-            class="rounded-xl border border-edge p-2.5 text-muted transition-colors hover:text-white disabled:opacity-40">
+            class="rounded-xl border border-edge p-2.5 text-muted transition-colors hover:text-ink disabled:opacity-40">
             <svg class="h-4 w-4" :class="cryptoLoading && 'animate-spin'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
           </button>
         </div>
@@ -565,12 +616,12 @@
             <div class="flex items-center gap-3 rounded-xl border border-edge bg-base/40 px-4 py-3">
               <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent2/10 font-display text-xs font-bold text-accent2" x-text="h.asset"></span>
               <div class="min-w-0 flex-1">
-                <p class="text-sm text-white"><span x-text="h.amount"></span> <span class="text-muted" x-text="h.asset"></span></p>
+                <p class="text-sm text-ink"><span x-text="h.amount"></span> <span class="text-muted" x-text="h.asset"></span></p>
                 <p class="text-[11px] text-muted">
                   курс <span x-text="cryptoPrices[h.asset] ? money(cryptoPrices[h.asset]) : '—'"></span>
                 </p>
               </div>
-              <span class="font-display text-sm font-semibold text-white" x-text="money(Math.round(cryptoValue(h)))"></span>
+              <span class="font-display text-sm font-semibold text-ink" x-text="money(Math.round(cryptoValue(h)))"></span>
               <button @click="deleteCrypto(h.id)" class="text-muted transition-colors hover:text-red-400">✕</button>
             </div>
           </template>
@@ -589,7 +640,7 @@
               <span x-show="e.target" class="text-[11px] text-muted" x-text="Math.round(e.balance / (e.target || 1) * 100) + '%'"></span>
             </div>
             <p class="mt-3 text-xs text-muted" x-text="e.name"></p>
-            <p class="mt-1 font-display text-lg font-bold text-white" x-text="money(e.balance)"></p>
+            <p class="mt-1 font-display text-lg font-bold text-ink" x-text="money(e.balance)"></p>
             <div x-show="e.target" class="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-edge">
               <div class="h-full rounded-full transition-all duration-700"
                    :style="`width:${Math.min(e.balance / (e.target || 1) * 100, 100)}%; background:linear-gradient(90deg,#10b98199,#10b981); box-shadow:0 0 12px #10b98166`"></div>
@@ -601,21 +652,21 @@
       <div class="grid gap-6 xl:grid-cols-5">
         <!-- Форма внесения и распределения (Вариант Б) -->
         <div class="rounded-3xl border border-edge bg-panel p-6 xl:col-span-2">
-          <h3 class="font-display text-base font-semibold text-white">Внести платёж</h3>
+          <h3 class="font-display text-base font-semibold text-ink">Внести платёж</h3>
           <p class="mt-1 text-sm text-muted">Укажи сумму и распредели её по конвертам вручную.</p>
 
           <label class="mt-5 block text-xs font-medium uppercase tracking-widest text-muted">Сумма платежа, $</label>
           <input x-model="incomeAmount" @input="incomeAmount = clean(incomeAmount)" placeholder="1000" inputmode="decimal"
-            class="mt-1.5 w-full rounded-xl border border-edge bg-base px-4 py-3 font-display text-xl font-semibold text-white outline-none transition-colors placeholder:text-muted/40 focus:border-neon" />
+            class="mt-1.5 w-full rounded-xl border border-edge bg-base px-4 py-3 font-display text-xl font-semibold text-ink outline-none transition-colors placeholder:text-muted/40 focus:border-neon" />
           <input x-model="incomeNote" placeholder="Комментарий (клиент, услуга…)"
-            class="mt-2 w-full rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none placeholder:text-muted/40 focus:border-accent" />
+            class="mt-2 w-full rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-ink outline-none placeholder:text-muted/40 focus:border-accent" />
 
           <div class="mt-5 space-y-3">
             <template x-for="e in envelopes" :key="e.id">
               <div class="flex items-center gap-3">
                 <span class="w-1/2 truncate text-sm text-muted" x-text="e.name"></span>
                 <input x-model="alloc[e.id]" @input="alloc[e.id] = clean(alloc[e.id])" placeholder="0" inputmode="decimal"
-                  class="w-24 rounded-lg border border-edge bg-base px-3 py-1.5 text-right text-sm text-white outline-none focus:border-neon" />
+                  class="w-24 rounded-lg border border-edge bg-base px-3 py-1.5 text-right text-sm text-ink outline-none focus:border-neon" />
                 <button @click="fillRemainder(e.id)" title="Добавить весь остаток в этот конверт"
                   class="rounded-lg border border-edge px-2 py-1.5 text-[11px] text-muted transition-colors hover:border-neon/40 hover:text-neon">
                   остаток
@@ -640,12 +691,12 @@
         <!-- Транзакции с фильтром -->
         <div class="rounded-3xl border border-edge bg-panel p-6 xl:col-span-3">
           <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h3 class="font-display text-base font-semibold text-white">Последние транзакции</h3>
+            <h3 class="font-display text-base font-semibold text-ink">Последние транзакции</h3>
             <div class="flex items-center gap-1 rounded-xl border border-edge bg-base p-1">
               <template x-for="f in txFilters" :key="f.id">
                 <button @click="txFilter = f.id"
                   class="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-                  :class="txFilter === f.id ? 'bg-accent/15 text-accent' : 'text-muted hover:text-white'"
+                  :class="txFilter === f.id ? 'bg-accent/15 text-accent' : 'text-muted hover:text-ink'"
                   x-text="f.label"></button>
               </template>
             </div>
@@ -660,10 +711,10 @@
                   <svg x-show="t.type !== 'income'" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
                 </div>
                 <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm font-medium text-white" x-text="t.type === 'income' ? t.note : '→ ' + t.envelopeName"></p>
+                  <p class="truncate text-sm font-medium text-ink" x-text="t.type === 'income' ? t.note : '→ ' + t.envelopeName"></p>
                   <p class="text-xs text-muted" x-text="fmtDate(t.date) + (t.type === 'allocation' ? ' · ' + t.note : '')"></p>
                 </div>
-                <span class="font-display text-sm font-semibold" :class="t.type === 'income' ? 'text-neon' : 'text-gray-300'"
+                <span class="font-display text-sm font-semibold" :class="t.type === 'income' ? 'text-neon' : 'text-ink2'"
                       x-text="(t.type === 'income' ? '+' : '') + money(t.amount)"></span>
               </div>
             </template>
@@ -677,17 +728,17 @@
     <section x-show="tab === 'crm'" x-transition:enter.opacity.duration.300ms>
       <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 class="font-display text-xl font-semibold tracking-tight text-white">Клиенты</h2>
+          <h2 class="font-display text-xl font-semibold tracking-tight text-ink">Клиенты</h2>
           <p class="mt-1 text-sm text-muted">Всё сохраняется в базу сразу · клик по статусу меняет его и дату касания</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
           <!-- Быстрый поиск по всем полям клиента -->
           <div class="relative w-full sm:w-auto">
             <input x-model="crmSearch" placeholder="Поиск: ник, имя, контакт, заметка…"
-              class="w-full sm:w-64 rounded-xl border border-edge bg-panel py-2.5 pl-9 pr-8 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
+              class="w-full sm:w-64 rounded-xl border border-edge bg-panel py-2.5 pl-9 pr-8 text-sm text-ink outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
             <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             <button x-show="crmSearch" @click="crmSearch = ''" aria-label="Очистить поиск"
-              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted transition-colors hover:text-white">✕</button>
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted transition-colors hover:text-ink">✕</button>
           </div>
           <!-- Выгрузка резервной копии -->
           <button @click="exportCsv()" title="Скачать всю базу клиентов в CSV"
@@ -695,7 +746,7 @@
             ⭳ Выгрузить CSV
           </button>
           <button @click="crmFormOpen = !crmFormOpen"
-            class="flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:brightness-110 hover:shadow-[0_0_24px_#6366f155]">
+            class="flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-ink transition-all duration-300 hover:brightness-110 hover:shadow-[0_0_24px_#D4AF3755]">
             <span x-text="crmFormOpen ? '✕ Закрыть' : '+ Новый клиент'"></span>
           </button>
         </div>
@@ -705,13 +756,13 @@
       <div class="mb-5 flex items-center gap-1 overflow-x-auto rounded-xl border border-edge bg-panel p-1 lg:flex-wrap">
         <button @click="crmStatusFilter = 'all'"
           class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-          :class="crmStatusFilter === 'all' ? 'bg-accent/15 text-accent' : 'text-muted hover:text-white'">
+          :class="crmStatusFilter === 'all' ? 'bg-accent/15 text-accent' : 'text-muted hover:text-ink'">
           Все <span x-text="'(' + crm.length + ')'"></span>
         </button>
         <template x-for="s in statusOrder" :key="s">
           <button @click="crmStatusFilter = s"
             class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-            :class="crmStatusFilter === s ? 'bg-accent/15 text-accent' : 'text-muted hover:text-white'">
+            :class="crmStatusFilter === s ? 'bg-accent/15 text-accent' : 'text-muted hover:text-ink'">
             <span x-text="crmStatusMeta[s].label"></span>
             <span x-text="'(' + crm.filter(c => c.status === s).length + ')'"></span>
           </button>
@@ -735,34 +786,34 @@
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <input x-ref="crmNick" x-model="crmForm.nickname" placeholder="@nickname *"
             @keydown.enter="addCrm()"
-            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
+            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
           <input x-model="crmForm.clientName" placeholder="Имя / компания"
-            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
+            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
           <input x-model="crmForm.contact" placeholder="Контакт: TG, телефон, почта"
-            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
+            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
           <select x-model="crmForm.status"
-            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none focus:border-accent">
+            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent">
             <template x-for="s in statusOrder" :key="s">
               <option :value="s" x-text="crmStatusMeta[s].label"></option>
             </template>
           </select>
           <input x-model="crmForm.profileUrl" placeholder="Ссылка на профиль"
-            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
+            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
           <input x-model="crmForm.postUrl" placeholder="Ссылка на пост/коммент"
-            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
+            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted/40 focus:border-accent" />
           <select x-model="crmForm.source"
-            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none focus:border-accent">
+            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent">
             <option value="">Источник…</option>
             <template x-for="s in sources" :key="s">
               <option :value="s" x-text="s"></option>
             </template>
           </select>
           <input x-model="crmForm.budget" placeholder="Бюджет $" inputmode="decimal"
-            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-neon" />
+            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted/40 focus:border-neon" />
         </div>
         <!-- Заметка — многострочная, чтобы влезал весь контекст по клиенту -->
         <textarea x-model="crmForm.notes" rows="3" placeholder="Заметка: что нужно клиенту, о чём договорились, цена, возражения…"
-          class="mt-3 w-full resize-y rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted/40 focus:border-accent"></textarea>
+          class="mt-3 w-full resize-y rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted/40 focus:border-accent"></textarea>
         <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
           <label class="flex cursor-pointer items-center gap-2 text-xs text-muted">
             <input type="checkbox" x-model="crmKeepOpen" class="h-3.5 w-3.5 accent-blue-500" />
@@ -789,7 +840,7 @@
                   <a :href="e.profileUrl || '#'" target="_blank" rel="noreferrer"
                      class="truncate font-medium text-accent" x-text="e.nickname"></a>
                 </div>
-                <p x-show="e.clientName" class="mt-0.5 truncate text-sm text-white" x-text="e.clientName"></p>
+                <p x-show="e.clientName" class="mt-0.5 truncate text-sm text-ink" x-text="e.clientName"></p>
                 <p x-show="e.contact" class="mt-0.5 truncate text-xs text-muted" x-text="e.contact"></p>
               </div>
               <span x-show="e.budget" class="shrink-0 font-display text-sm font-semibold text-neon" x-text="money(e.budget || 0)"></span>
@@ -801,7 +852,7 @@
                 class="cursor-pointer rounded-full border bg-transparent px-2.5 py-1 text-[11px] font-medium outline-none"
                 :class="crmStatusMeta[e.status].cls">
                 <template x-for="s in statusOrder" :key="'ms-' + s">
-                  <option :value="s" x-text="crmStatusMeta[s].label" class="bg-panel text-white"></option>
+                  <option :value="s" x-text="crmStatusMeta[s].label" class="bg-panel text-ink"></option>
                 </template>
               </select>
               <span x-show="e.source" class="rounded-full border border-edge bg-base px-2 py-0.5 text-[10px] text-muted" x-text="e.source"></span>
@@ -852,18 +903,18 @@
             <!-- Редактирование на телефоне -->
             <div x-show="crmEditId === e.id" class="mt-3 space-y-2 border-t border-edge pt-3">
               <input x-model="crmEdit.nickname" placeholder="@nickname"
-                class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-accent" />
+                class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-accent" />
               <input x-model="crmEdit.clientName" placeholder="Имя / компания"
-                class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-accent" />
+                class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-accent" />
               <input x-model="crmEdit.contact" placeholder="Контакт"
-                class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-accent" />
+                class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-accent" />
               <input x-model="crmEdit.budget" placeholder="Бюджет $" inputmode="decimal"
-                class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-neon" />
+                class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-neon" />
               <label class="block text-xs text-muted">Напомнить написать</label>
               <input x-model="crmEdit.nextTouch" type="date"
-                class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-amber-500" />
+                class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-amber-500" />
               <textarea x-model="crmEdit.notes" rows="4" placeholder="Заметка"
-                class="w-full resize-y rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-accent"></textarea>
+                class="w-full resize-y rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"></textarea>
               <div class="flex gap-2">
                 <button @click="saveEdit()" class="flex-1 rounded-xl bg-neon py-2.5 text-xs font-semibold text-base">Сохранить</button>
                 <button @click="cancelEdit()" class="flex-1 rounded-xl border border-edge py-2.5 text-xs text-muted">Отмена</button>
@@ -874,18 +925,18 @@
             <div x-show="openTimelineId === e.id" class="mt-3 border-t border-edge pt-3">
               <div class="mb-3 space-y-2">
                 <select x-model="iForm.type"
-                  class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-accent2">
+                  class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-accent2">
                   <template x-for="t in iTypeOrder" :key="'mit-' + t">
                     <option :value="t" x-text="iTypes[t].label"></option>
                   </template>
                 </select>
                 <input x-model="iForm.note" placeholder="Что произошло…"
-                  class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-accent2" />
+                  class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-accent2" />
                 <div class="flex gap-2">
                   <input x-model="iForm.date" type="date"
-                    class="flex-1 rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-accent2" />
+                    class="flex-1 rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-ink outline-none focus:border-accent2" />
                   <button @click="addInteraction(e.id)"
-                    class="rounded-xl bg-accent2 px-4 py-2.5 text-sm font-semibold text-white">Добавить</button>
+                    class="rounded-xl bg-accent2 px-4 py-2.5 text-sm font-semibold text-ink">Добавить</button>
                 </div>
               </div>
               <div class="space-y-3">
@@ -898,7 +949,7 @@
                         <span class="text-[10px] text-muted" x-text="fmtDate(it.date)"></span>
                         <button @click="deleteInteraction(e.id, it.id)" class="ml-auto text-xs text-muted">✕</button>
                       </div>
-                      <p x-show="it.note" class="mt-0.5 whitespace-pre-wrap text-sm text-gray-300" x-text="it.note"></p>
+                      <p x-show="it.note" class="mt-0.5 whitespace-pre-wrap text-sm text-ink2" x-text="it.note"></p>
                     </div>
                   </div>
                 </template>
@@ -915,7 +966,7 @@
               <div class="mt-2 space-y-2">
                 <template x-for="f in filesOf(e.id)" :key="'mf-' + f.id">
                   <div class="flex items-center gap-2 rounded-xl border border-edge bg-base px-3 py-2">
-                    <button @click="openFile(f)" class="min-w-0 flex-1 truncate text-left text-xs text-white" x-text="f.name"></button>
+                    <button @click="openFile(f)" class="min-w-0 flex-1 truncate text-left text-xs text-ink" x-text="f.name"></button>
                     <span class="shrink-0 text-[10px] text-muted" x-text="fmtSize(f.size)"></span>
                     <button @click="deleteFile(e.id, f.id)" class="shrink-0 text-muted">✕</button>
                   </div>
@@ -947,7 +998,7 @@
           </thead>
           <template x-for="e in filteredCrm" :key="e.id">
           <tbody class="divide-y divide-edge">
-              <tr class="align-top transition-colors hover:bg-white/[0.02]">
+              <tr class="align-top transition-colors hover:bg-ink/[0.03]">
                 <!-- ── Клиент: ник + имя/компания + источник ── -->
                 <template x-if="crmEditId !== e.id">
                   <td class="px-5 py-3.5">
@@ -955,7 +1006,7 @@
                       <svg x-show="e.pinned" class="h-3 w-3 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1Z"/></svg>
                       <a :href="e.profileUrl || '#'" target="_blank" rel="noreferrer" class="font-medium text-accent hover:underline" x-text="e.nickname"></a>
                     </div>
-                    <p x-show="e.clientName" class="mt-0.5 text-xs text-white" x-text="e.clientName"></p>
+                    <p x-show="e.clientName" class="mt-0.5 text-xs text-ink" x-text="e.clientName"></p>
                     <!-- Данные есть на экране, но в базу не записались -->
                     <div x-show="e.unsaved" class="mt-1 flex items-center gap-2">
                       <span class="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">не сохранён в базе</span>
@@ -964,36 +1015,36 @@
                     </div>
                     <div class="mt-1 flex flex-wrap items-center gap-2">
                       <span x-show="e.source" class="rounded-full border border-edge bg-base px-2 py-0.5 text-[10px] text-muted" x-text="e.source"></span>
-                      <a x-show="e.postUrl" :href="e.postUrl" target="_blank" rel="noreferrer" class="text-[10px] text-muted underline transition-colors hover:text-white">пост</a>
+                      <a x-show="e.postUrl" :href="e.postUrl" target="_blank" rel="noreferrer" class="text-[10px] text-muted underline transition-colors hover:text-ink">пост</a>
                     </div>
                   </td>
                 </template>
                 <template x-if="crmEditId === e.id">
                   <td class="space-y-2 px-5 py-3.5">
                     <input x-model="crmEdit.nickname" placeholder="@nickname"
-                      class="w-full rounded-lg border border-accent/40 bg-base px-2.5 py-1.5 text-sm text-white outline-none" />
+                      class="w-full rounded-lg border border-accent/40 bg-base px-2.5 py-1.5 text-sm text-ink outline-none" />
                     <input x-model="crmEdit.clientName" placeholder="Имя / компания"
-                      class="w-full rounded-lg border border-edge bg-base px-2.5 py-1.5 text-xs text-white outline-none focus:border-accent" />
+                      class="w-full rounded-lg border border-edge bg-base px-2.5 py-1.5 text-xs text-ink outline-none focus:border-accent" />
                     <input x-model="crmEdit.profileUrl" placeholder="Ссылка на профиль"
-                      class="w-full rounded-lg border border-edge bg-base px-2.5 py-1.5 text-xs text-white outline-none focus:border-accent" />
+                      class="w-full rounded-lg border border-edge bg-base px-2.5 py-1.5 text-xs text-ink outline-none focus:border-accent" />
                     <input x-model="crmEdit.postUrl" placeholder="Ссылка на пост"
-                      class="w-full rounded-lg border border-edge bg-base px-2.5 py-1.5 text-xs text-white outline-none focus:border-accent" />
+                      class="w-full rounded-lg border border-edge bg-base px-2.5 py-1.5 text-xs text-ink outline-none focus:border-accent" />
                   </td>
                 </template>
 
                 <!-- ── Контакт ── -->
                 <template x-if="crmEditId !== e.id">
                   <td class="px-5 py-3.5">
-                    <span x-show="e.contact" class="text-gray-300" x-text="e.contact"></span>
+                    <span x-show="e.contact" class="text-ink2" x-text="e.contact"></span>
                     <span x-show="!e.contact" class="text-muted/40">—</span>
                   </td>
                 </template>
                 <template x-if="crmEditId === e.id">
                   <td class="space-y-2 px-5 py-3.5">
                     <input x-model="crmEdit.contact" placeholder="TG / телефон / почта"
-                      class="w-full rounded-lg border border-edge bg-base px-2.5 py-1.5 text-xs text-white outline-none focus:border-accent" />
+                      class="w-full rounded-lg border border-edge bg-base px-2.5 py-1.5 text-xs text-ink outline-none focus:border-accent" />
                     <select x-model="crmEdit.source"
-                      class="w-full rounded-lg border border-edge bg-base px-2.5 py-1.5 text-xs text-white outline-none focus:border-accent">
+                      class="w-full rounded-lg border border-edge bg-base px-2.5 py-1.5 text-xs text-ink outline-none focus:border-accent">
                       <option value="">Источник…</option>
                       <template x-for="s in sources" :key="s">
                         <option :value="s" x-text="s"></option>
@@ -1008,11 +1059,11 @@
                     class="cursor-pointer rounded-full border bg-transparent px-2.5 py-1 text-[11px] font-medium outline-none transition-colors"
                     :class="crmStatusMeta[e.status].cls">
                     <template x-for="s in statusOrder" :key="s">
-                      <option :value="s" x-text="crmStatusMeta[s].label" class="bg-panel text-white"></option>
+                      <option :value="s" x-text="crmStatusMeta[s].label" class="bg-panel text-ink"></option>
                     </template>
                     <!-- Старое значение показываем, чтобы select не сбрасывал его -->
                     <option x-show="!statusOrder.includes(e.status)" :value="e.status"
-                      x-text="crmStatusMeta[e.status].label" class="bg-panel text-white"></option>
+                      x-text="crmStatusMeta[e.status].label" class="bg-panel text-ink"></option>
                   </select>
                   <p class="mt-1 text-[10px] text-muted" x-text="fmtDate(e.lastTouch)"></p>
                 </td>
@@ -1027,10 +1078,10 @@
                 <template x-if="crmEditId === e.id">
                   <td class="px-5 py-3.5">
                     <input x-model="crmEdit.budget" placeholder="$" inputmode="decimal"
-                      class="w-24 rounded-lg border border-edge bg-base px-2.5 py-1.5 text-xs text-white outline-none focus:border-neon" />
+                      class="w-24 rounded-lg border border-edge bg-base px-2.5 py-1.5 text-xs text-ink outline-none focus:border-neon" />
                     <label class="mt-2 block text-[10px] text-muted">Напомнить</label>
                     <input x-model="crmEdit.nextTouch" type="date"
-                      class="w-32 rounded-lg border border-edge bg-base px-2 py-1.5 text-xs text-white outline-none focus:border-amber-500" />
+                      class="w-32 rounded-lg border border-edge bg-base px-2 py-1.5 text-xs text-ink outline-none focus:border-amber-500" />
                   </td>
                 </template>
 
@@ -1041,7 +1092,7 @@
                 <template x-if="crmEditId === e.id">
                   <td class="px-5 py-3.5">
                     <textarea x-model="crmEdit.notes" rows="4" placeholder="Заметка"
-                      class="w-full min-w-[240px] resize-y rounded-lg border border-accent/40 bg-base px-2.5 py-1.5 text-sm text-white outline-none"></textarea>
+                      class="w-full min-w-[240px] resize-y rounded-lg border border-accent/40 bg-base px-2.5 py-1.5 text-sm text-ink outline-none"></textarea>
                   </td>
                 </template>
 
@@ -1065,7 +1116,7 @@
                         : 'border-edge text-muted hover:border-accent2/40 hover:text-accent2'">
                       <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
                       <span x-show="timelineOf(e.id).length"
-                        class="absolute -right-1 -top-1 rounded-full bg-accent2 px-1 text-[9px] font-bold text-white"
+                        class="absolute -right-1 -top-1 rounded-full bg-accent2 px-1 text-[9px] font-bold text-ink"
                         x-text="timelineOf(e.id).length"></span>
                     </button>
                     <!-- Файлы клиента -->
@@ -1076,7 +1127,7 @@
                         : 'border-edge text-muted hover:border-accent/40 hover:text-accent'">
                       <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
                       <span x-show="filesOf(e.id).length"
-                        class="absolute -right-1 -top-1 rounded-full bg-accent px-1 text-[9px] font-bold text-white"
+                        class="absolute -right-1 -top-1 rounded-full bg-accent px-1 text-[9px] font-bold text-ink"
                         x-text="filesOf(e.id).length"></span>
                     </button>
                     <button @click="startEdit(e.id)" title="Редактировать"
@@ -1094,14 +1145,14 @@
                     <button @click="deleteLead(e.id)"
                       class="rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/20">Да</button>
                     <button @click="crmDeleteId = null"
-                      class="rounded-lg border border-edge px-2.5 py-1 text-xs text-muted transition-colors hover:text-white">Нет</button>
+                      class="rounded-lg border border-edge px-2.5 py-1 text-xs text-muted transition-colors hover:text-ink">Нет</button>
                   </div>
                   <!-- Режим редактирования -->
                   <div x-show="crmEditId === e.id" class="flex justify-end gap-2">
                     <button @click="saveEdit()"
                       class="rounded-lg bg-neon px-3 py-1.5 text-xs font-semibold text-base transition-all hover:brightness-110">Сохранить</button>
                     <button @click="cancelEdit()"
-                      class="rounded-lg border border-edge px-3 py-1.5 text-xs text-muted transition-colors hover:text-white">Отмена</button>
+                      class="rounded-lg border border-edge px-3 py-1.5 text-xs text-muted transition-colors hover:text-ink">Отмена</button>
                   </div>
                 </td>
               </tr>
@@ -1123,7 +1174,7 @@
                     <template x-for="f in filesOf(e.id)" :key="f.id">
                       <div class="flex items-center gap-2 rounded-xl border border-edge bg-panel px-3 py-2">
                         <svg class="h-3.5 w-3.5 shrink-0 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v6h6"/></svg>
-                        <button @click="openFile(f)" class="max-w-[220px] truncate text-xs text-white hover:underline" x-text="f.name"></button>
+                        <button @click="openFile(f)" class="max-w-[220px] truncate text-xs text-ink hover:underline" x-text="f.name"></button>
                         <span class="text-[10px] text-muted" x-text="fmtSize(f.size)"></span>
                         <button @click="deleteFile(e.id, f.id)" title="Удалить файл"
                           class="text-muted transition-colors hover:text-red-400">✕</button>
@@ -1146,17 +1197,17 @@
                   <!-- Форма добавления события -->
                   <div class="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-edge bg-panel p-3">
                     <select x-model="iForm.type"
-                      class="rounded-lg border border-edge bg-base px-3 py-2 text-xs text-white outline-none focus:border-accent2">
+                      class="rounded-lg border border-edge bg-base px-3 py-2 text-xs text-ink outline-none focus:border-accent2">
                       <template x-for="t in iTypeOrder" :key="'it-' + t">
                         <option :value="t" x-text="iTypes[t].label"></option>
                       </template>
                     </select>
                     <input x-model="iForm.note" placeholder="Что произошло: детали, договорённости…" @keydown.enter="addInteraction(e.id)"
-                      class="min-w-[200px] flex-1 rounded-lg border border-edge bg-base px-3 py-2 text-xs text-white outline-none focus:border-accent2" />
+                      class="min-w-[200px] flex-1 rounded-lg border border-edge bg-base px-3 py-2 text-xs text-ink outline-none focus:border-accent2" />
                     <input x-model="iForm.date" type="date"
-                      class="rounded-lg border border-edge bg-base px-2 py-2 text-xs text-white outline-none focus:border-accent2" />
+                      class="rounded-lg border border-edge bg-base px-2 py-2 text-xs text-ink outline-none focus:border-accent2" />
                     <button @click="addInteraction(e.id)"
-                      class="rounded-lg bg-accent2 px-4 py-2 text-xs font-semibold text-white transition-all hover:brightness-110">Добавить</button>
+                      class="rounded-lg bg-accent2 px-4 py-2 text-xs font-semibold text-ink transition-all hover:brightness-110">Добавить</button>
                   </div>
 
                   <!-- Вертикальная лента -->
@@ -1178,7 +1229,7 @@
                             <button @click="deleteInteraction(e.id, it.id)"
                               class="ml-auto text-muted opacity-0 transition-opacity hover:text-red-400 group-hover:opacity-100">✕</button>
                           </div>
-                          <p x-show="it.note" class="mt-0.5 whitespace-pre-wrap text-sm text-gray-300" x-text="it.note"></p>
+                          <p x-show="it.note" class="mt-0.5 whitespace-pre-wrap text-sm text-ink2" x-text="it.note"></p>
                         </div>
                       </div>
                     </template>
@@ -1208,7 +1259,7 @@
     <!-- ─────────── 5. GA4 АНАЛИТИКА (заглушка под Data API) ─────────── -->
     <section x-show="tab === 'analytics'" x-transition:enter.opacity.duration.300ms class="space-y-6">
       <div>
-        <h2 class="font-display text-xl font-semibold tracking-tight text-white">Аналитика</h2>
+        <h2 class="font-display text-xl font-semibold tracking-tight text-ink">Аналитика</h2>
         <p class="mt-1 text-sm text-muted">Живая статистика соцсетей · Telegram и YouTube обновляются автоматически</p>
       </div>
 
@@ -1220,7 +1271,7 @@
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <span class="h-2.5 w-2.5 rounded-full" :style="`background:${s.color}; box-shadow:0 0 10px ${s.color}`"></span>
-                <span class="font-display text-sm font-semibold text-white" x-text="s.label"></span>
+                <span class="font-display text-sm font-semibold text-ink" x-text="s.label"></span>
               </div>
               <span x-show="s.live" class="flex items-center gap-1 rounded-full border border-neon/25 bg-neon/10 px-2 py-0.5 text-[10px] font-medium text-neon">
                 <span class="h-1.5 w-1.5 rounded-full bg-neon"></span> live
@@ -1229,27 +1280,27 @@
             </div>
 
             <!-- Число подписчиков -->
-            <p class="mt-4 font-display text-3xl font-bold text-white" x-text="fmtNum(socialValue(s.id))"></p>
+            <p class="mt-4 font-display text-3xl font-bold text-ink" x-text="fmtNum(socialValue(s.id))"></p>
             <p class="text-xs text-muted">подписчиков</p>
 
             <!-- YouTube: доп. метрики -->
             <div x-show="s.id === 'yt' && liveStats.youtube" class="mt-3 grid grid-cols-2 gap-2">
               <div class="rounded-xl border border-edge bg-base/40 p-2.5">
                 <p class="text-[10px] text-muted">Просмотры</p>
-                <p class="font-display text-sm font-semibold text-white" x-text="fmtNum(liveStats.youtube?.views)"></p>
+                <p class="font-display text-sm font-semibold text-ink" x-text="fmtNum(liveStats.youtube?.views)"></p>
               </div>
               <div class="rounded-xl border border-edge bg-base/40 p-2.5">
                 <p class="text-[10px] text-muted">Видео</p>
-                <p class="font-display text-sm font-semibold text-white" x-text="liveStats.youtube?.videos ?? '—'"></p>
+                <p class="font-display text-sm font-semibold text-ink" x-text="liveStats.youtube?.videos ?? '—'"></p>
               </div>
             </div>
 
             <!-- Ручной ввод для площадок без API -->
             <div x-show="!s.live" class="mt-3 space-y-2">
               <input x-model.number="(socialManual[s.id] ??= {}).value" placeholder="Подписчиков" inputmode="numeric"
-                class="w-full rounded-xl border border-edge bg-base px-3 py-2 text-sm text-white outline-none focus:border-accent" />
+                class="w-full rounded-xl border border-edge bg-base px-3 py-2 text-sm text-ink outline-none focus:border-accent" />
               <input x-model="(socialManual[s.id] ??= {}).url" placeholder="Ссылка на профиль"
-                class="w-full rounded-xl border border-edge bg-base px-3 py-2 text-xs text-white outline-none focus:border-accent" />
+                class="w-full rounded-xl border border-edge bg-base px-3 py-2 text-xs text-ink outline-none focus:border-accent" />
               <button @click="saveManual(s.id)"
                 class="w-full rounded-xl border border-accent/30 bg-accent/10 py-2 text-xs font-semibold text-accent transition-colors hover:bg-accent/20">Сохранить</button>
             </div>
@@ -1268,7 +1319,7 @@
       <!-- Кнопка обновления живых данных -->
       <div class="flex items-center gap-3">
         <button @click="loadLiveStats()" :disabled="statsLoading"
-          class="flex items-center gap-2 rounded-xl border border-edge bg-panel px-4 py-2 text-sm text-muted transition-colors hover:text-white disabled:opacity-40">
+          class="flex items-center gap-2 rounded-xl border border-edge bg-panel px-4 py-2 text-sm text-muted transition-colors hover:text-ink disabled:opacity-40">
           <svg class="h-4 w-4" :class="statsLoading && 'animate-spin'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
           Обновить живые данные
         </button>
@@ -1278,7 +1329,7 @@
       <!-- ═══ Рост подписчиков ═══ -->
       <div class="rounded-3xl border border-edge bg-panel p-6">
         <div class="mb-1 flex items-center justify-between">
-          <h3 class="font-display text-base font-semibold text-white">Рост подписчиков</h3>
+          <h3 class="font-display text-base font-semibold text-ink">Рост подписчиков</h3>
           <span class="text-xs text-muted">снимки копятся автоматически при заходе</span>
         </div>
         <p class="mb-5 text-xs text-muted">История начнёт строиться с сегодняшнего дня — заходи, и график будет наполняться</p>
@@ -1288,7 +1339,7 @@
               <div class="mb-3 flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <span class="h-2 w-2 rounded-full" :style="`background:${s.color}`"></span>
-                  <span class="text-sm font-medium text-white" x-text="s.label"></span>
+                  <span class="text-sm font-medium text-ink" x-text="s.label"></span>
                 </div>
                 <span class="text-xs font-semibold"
                   :class="growthOf(s.id) > 0 ? 'text-neon' : growthOf(s.id) < 0 ? 'text-red-400' : 'text-muted'"
@@ -1313,7 +1364,7 @@
                 </div>
               </div>
               <p class="mt-2 text-xs text-muted">
-                сейчас <span class="font-semibold text-white" x-text="fmtNum(socialValue(s.id))"></span>
+                сейчас <span class="font-semibold text-ink" x-text="fmtNum(socialValue(s.id))"></span>
               </p>
             </div>
           </template>
@@ -1331,7 +1382,7 @@
             <div>
               <div class="flex items-center gap-2">
                 <span class="h-2.5 w-2.5 rounded-full" :style="`background:${site.color}; box-shadow:0 0 10px ${site.color}`"></span>
-                <h3 class="font-display text-lg font-semibold text-white" x-text="site.name"></h3>
+                <h3 class="font-display text-lg font-semibold text-ink" x-text="site.name"></h3>
               </div>
               <p class="mt-1 text-xs text-muted" x-text="site.kindLabel"></p>
             </div>
@@ -1344,7 +1395,7 @@
                    :title="isLink(r.url) ? r.url : 'Ссылка не задана'"
                    class="group inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors"
                    :class="isLink(r.url)
-                     ? 'border-edge bg-base text-gray-300 hover:border-accent/40 hover:text-accent'
+                     ? 'border-edge bg-base text-ink2 hover:border-accent/40 hover:text-accent'
                      : 'border-edge bg-base text-muted/50 cursor-default'">
                   <span x-text="r.label"></span>
                   <svg class="h-3 w-3 opacity-60 transition-opacity group-hover:opacity-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
@@ -1359,7 +1410,7 @@
               <template x-for="m in site.metrics" :key="m.label">
                 <div class="rounded-xl border border-edge bg-base p-4">
                   <p class="text-xs text-muted" x-text="m.label"></p>
-                  <p class="mt-1.5 font-display text-xl font-bold" :class="m.accent === 'neon' ? 'text-neon' : 'text-white'" x-text="m.value"></p>
+                  <p class="mt-1.5 font-display text-xl font-bold" :class="m.accent === 'neon' ? 'text-neon' : 'text-ink'" x-text="m.value"></p>
                 </div>
               </template>
             </div>
@@ -1399,7 +1450,7 @@
                 <template x-for="d in site.distribution" :key="d.name">
                   <div>
                     <div class="mb-1 flex justify-between text-xs">
-                      <span class="text-gray-300" x-text="d.name"></span>
+                      <span class="text-ink2" x-text="d.name"></span>
                       <span class="text-muted" x-text="d.share + '%'"></span>
                     </div>
                     <div class="h-2.5 w-full overflow-hidden rounded-full bg-edge">
@@ -1414,6 +1465,104 @@
         </div>
       </template>
     </section>
+
+    <!-- ─────────── 6. ХОТЕЛКИ ─────────── -->
+    <section x-show="tab === 'wishlist'" x-transition:enter.opacity.duration.300ms class="space-y-6">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 class="font-display text-xl font-semibold tracking-tight text-ink">Хотелки</h2>
+          <p class="mt-1 text-sm text-muted">Что хочу купить · на сумму <span class="font-semibold text-accent" x-text="money(Math.round(wishTotal)) + ' (по ценам как ввёл)'"></span></p>
+        </div>
+        <button @click="wishFormOpen = !wishFormOpen"
+          class="flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-base transition-all duration-300 hover:brightness-110">
+          <span x-text="wishFormOpen ? '✕ Закрыть' : '+ Добавить хотелку'"></span>
+        </button>
+      </div>
+
+      <!-- Форма -->
+      <div x-show="wishFormOpen" x-transition class="rounded-3xl border border-edge bg-panel p-5">
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <input x-model="wishForm.title" placeholder="Что за товар *" @keydown.enter="addWish()"
+            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-ink outline-none placeholder:text-muted/40 focus:border-accent lg:col-span-2" />
+          <div class="flex gap-2">
+            <input x-model="wishForm.price" inputmode="decimal" placeholder="Цена"
+              class="w-full rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-ink outline-none placeholder:text-muted/40 focus:border-accent" />
+            <select x-model="wishForm.currency"
+              class="rounded-xl border border-edge bg-base px-2 py-2.5 text-sm text-ink outline-none focus:border-accent">
+              <option value="BYN">Br</option><option value="USD">$</option><option value="RUB">₽</option>
+            </select>
+          </div>
+          <select x-model="wishForm.priority"
+            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent">
+            <option value="3">Высокий приоритет</option>
+            <option value="2">Средний приоритет</option>
+            <option value="1">Низкий приоритет</option>
+          </select>
+          <input x-model="wishForm.url" placeholder="Ссылка на товар"
+            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-ink outline-none placeholder:text-muted/40 focus:border-accent lg:col-span-2" />
+          <input x-model="wishForm.note" placeholder="Заметка"
+            class="rounded-xl border border-edge bg-base px-3.5 py-2.5 text-sm text-ink outline-none placeholder:text-muted/40 focus:border-accent lg:col-span-2" />
+        </div>
+        <div class="mt-3 flex justify-end">
+          <button @click="addWish()" :disabled="!wishForm.title.trim()"
+            class="rounded-xl bg-neon px-5 py-2.5 text-sm font-semibold text-base transition-all hover:brightness-110 disabled:opacity-40">Сохранить</button>
+        </div>
+      </div>
+
+      <!-- Фильтры + сортировка -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center gap-1 overflow-x-auto rounded-xl border border-edge bg-panel p-1">
+          <button @click="wishFilter = 'all'" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+            :class="wishFilter === 'all' ? 'bg-accent/15 text-accent' : 'text-muted hover:text-ink'">Все</button>
+          <button @click="wishFilter = '3'" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+            :class="wishFilter === '3' ? 'bg-accent/15 text-accent' : 'text-muted hover:text-ink'">Высокий</button>
+          <button @click="wishFilter = '2'" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+            :class="wishFilter === '2' ? 'bg-accent/15 text-accent' : 'text-muted hover:text-ink'">Средний</button>
+          <button @click="wishFilter = '1'" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+            :class="wishFilter === '1' ? 'bg-accent/15 text-accent' : 'text-muted hover:text-ink'">Низкий</button>
+          <button @click="wishFilter = 'bought'" class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+            :class="wishFilter === 'bought' ? 'bg-accent/15 text-accent' : 'text-muted hover:text-ink'">Куплено</button>
+        </div>
+        <select x-model="wishSort"
+          class="ml-auto rounded-xl border border-edge bg-panel px-3 py-2 text-xs text-muted outline-none focus:border-accent">
+          <option value="priority">По важности</option>
+          <option value="price_asc">Сначала дешёвые</option>
+          <option value="price_desc">Сначала дорогие</option>
+        </select>
+      </div>
+
+      <!-- Карточки хотелок -->
+      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <template x-for="w in filteredWish" :key="w.id">
+          <div class="group relative overflow-hidden rounded-3xl border border-edge bg-panel p-5"
+               :class="w.bought && 'opacity-60'">
+            <div class="pointer-events-none absolute -right-14 -top-14 h-32 w-32 rounded-full bg-accent/10 blur-2xl"></div>
+            <div class="flex items-start justify-between gap-3">
+              <h3 class="font-display text-base font-semibold text-ink" :class="w.bought && 'line-through'" x-text="w.title"></h3>
+              <span class="shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-medium" :class="prioMeta[w.priority].cls" x-text="prioMeta[w.priority].label"></span>
+            </div>
+            <p x-show="w.price" class="mt-3 font-display text-2xl font-bold text-accent" x-text="fmtPrice(w)"></p>
+            <p x-show="w.note" class="mt-2 text-sm text-muted" x-text="w.note"></p>
+            <div class="mt-4 flex items-center gap-2">
+              <a x-show="w.url" :href="w.url" target="_blank" rel="noreferrer"
+                 class="flex items-center gap-1 rounded-lg border border-edge px-3 py-1.5 text-xs text-muted transition-colors hover:border-accent/40 hover:text-accent">
+                Открыть
+                <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+              </a>
+              <button @click="toggleBought(w.id)"
+                class="rounded-lg border px-3 py-1.5 text-xs transition-colors"
+                :class="w.bought ? 'border-neon/30 bg-neon/10 text-neon' : 'border-edge text-muted hover:border-neon/40 hover:text-neon'"
+                x-text="w.bought ? '✓ Куплено' : 'Отметить купленным'"></button>
+              <button @click="deleteWish(w.id)" class="ml-auto text-muted opacity-0 transition-opacity hover:text-red-400 group-hover:opacity-100">✕</button>
+            </div>
+          </div>
+        </template>
+      </div>
+      <p x-show="!filteredWish.length" class="rounded-3xl border border-edge bg-panel px-5 py-12 text-center text-sm text-muted/60">
+        <span x-show="wishFilter === 'bought'">Пока ничего не куплено из списка</span>
+        <span x-show="wishFilter !== 'bought'">Список пуст — добавь первую хотелку. Макбук ждёт 😉</span>
+      </p>
+    </section>
   </main>
 
   <!-- ═══════════════ МОДАЛКА: НОВАЯ ЗАДАЧА ═══════════════ -->
@@ -1424,22 +1573,22 @@
          x-transition:enter-start="scale-95 opacity-0" x-transition:enter-end="scale-100 opacity-100"
          class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-edge bg-panel p-5 shadow-2xl sm:p-6">
       <div class="mb-5 flex items-center justify-between">
-        <h3 class="font-display text-lg font-semibold text-white">Новая задача</h3>
-        <button @click="taskModal = false" class="text-muted hover:text-white" aria-label="Закрыть">
+        <h3 class="font-display text-lg font-semibold text-ink">Новая задача</h3>
+        <button @click="taskModal = false" class="text-muted hover:text-ink" aria-label="Закрыть">
           <i data-lucide="x" class="h-[18px] w-[18px]"></i>
         </button>
       </div>
 
       <div class="space-y-3">
         <input x-model="taskForm.title" x-ref="taskTitle" placeholder="Название задачи"
-          class="w-full rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none placeholder:text-muted/40 focus:border-accent" />
+          class="w-full rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-ink outline-none placeholder:text-muted/40 focus:border-accent" />
         <textarea x-model="taskForm.description" placeholder="Описание" rows="3"
-          class="w-full resize-none rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none placeholder:text-muted/40 focus:border-accent"></textarea>
+          class="w-full resize-none rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-ink outline-none placeholder:text-muted/40 focus:border-accent"></textarea>
         <div class="grid grid-cols-2 gap-3">
           <input x-model="taskForm.project" placeholder="Проект"
-            class="rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none focus:border-accent" />
+            class="rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-ink outline-none focus:border-accent" />
           <select x-model="taskForm.priority"
-            class="rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-white outline-none focus:border-accent">
+            class="rounded-xl border border-edge bg-base px-4 py-2.5 text-sm text-ink outline-none focus:border-accent">
             <option value="high">Высокий</option>
             <option value="medium">Средний</option>
             <option value="low">Низкий</option>
@@ -1448,7 +1597,7 @@
       </div>
 
       <button @click="addTask()" :disabled="!taskForm.title.trim()"
-        class="mt-5 w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40">
+        class="mt-5 w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40">
         Создать задачу
       </button>
     </div>
@@ -1462,19 +1611,19 @@
        @click.self="securityOpen = false">
     <div class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-edge bg-panel p-6 shadow-glass">
       <div class="mb-5 flex items-center justify-between">
-        <h3 class="font-display text-lg font-semibold text-white">Безопасность</h3>
-        <button @click="securityOpen = false" class="text-muted hover:text-white">✕</button>
+        <h3 class="font-display text-lg font-semibold text-ink">Безопасность</h3>
+        <button @click="securityOpen = false" class="text-muted hover:text-ink">✕</button>
       </div>
 
       <!-- Статус 2FA -->
       <div class="mb-4 flex items-center gap-3 rounded-2xl border p-4"
            :class="mfaEnabled ? 'border-neon/25 bg-neon/5' : 'border-edge bg-base/40'">
         <div class="flex h-9 w-9 items-center justify-center rounded-xl"
-             :class="mfaEnabled ? 'bg-neon/10 text-neon' : 'bg-white/5 text-muted'">
+             :class="mfaEnabled ? 'bg-neon/10 text-neon' : 'bg-ink/5 text-muted'">
           <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
         </div>
         <div>
-          <p class="text-sm font-medium text-white">Двухфакторная аутентификация</p>
+          <p class="text-sm font-medium text-ink">Двухфакторная аутентификация</p>
           <p class="text-xs" :class="mfaEnabled ? 'text-neon' : 'text-muted'"
              x-text="mfaEnabled ? 'Включена — вход защищён кодом' : 'Выключена'"></p>
         </div>
@@ -1486,7 +1635,7 @@
           Понадобится приложение-аутентификатор на телефоне: Google Authenticator, Microsoft Authenticator или Authy.
         </p>
         <button @click="startEnroll()" :disabled="enroll.busy"
-          class="w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition-all hover:brightness-110 disabled:opacity-40">
+          class="w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink transition-all hover:brightness-110 disabled:opacity-40">
           <span x-text="enroll.busy ? 'Готовлю…' : 'Включить 2FA'"></span>
         </button>
         <p x-show="enroll.error" class="mt-3 text-xs text-red-400" x-text="enroll.error"></p>
@@ -1500,14 +1649,14 @@
         </div>
         <p class="text-xs text-muted">Не сканируется? Введи ключ вручную:</p>
         <div class="flex items-center gap-2 rounded-xl border border-edge bg-base px-3 py-2.5">
-          <code class="min-w-0 flex-1 break-all font-mono text-xs text-white" x-text="enroll.secret"></code>
+          <code class="min-w-0 flex-1 break-all font-mono text-xs text-ink" x-text="enroll.secret"></code>
           <button @click="navigator.clipboard.writeText(enroll.secret); notify('Скопировано','ok')"
             class="shrink-0 rounded-lg border border-edge px-2 py-1 text-[11px] text-accent transition-colors hover:bg-accent/10">копировать</button>
         </div>
         <p class="text-sm text-muted">2. Введи 6-значный код из приложения:</p>
         <input x-model="enroll.code" inputmode="numeric" maxlength="6" placeholder="000000"
           @keydown.enter="confirmEnroll()"
-          class="w-full rounded-xl border border-edge bg-base px-4 py-3 text-center font-display text-xl tracking-[0.3em] text-white outline-none focus:border-accent" />
+          class="w-full rounded-xl border border-edge bg-base px-4 py-3 text-center font-display text-xl tracking-[0.3em] text-ink outline-none focus:border-accent" />
         <p x-show="enroll.error" class="text-xs text-red-400" x-text="enroll.error"></p>
         <button @click="confirmEnroll()" :disabled="enroll.busy || enroll.code.length < 6"
           class="w-full rounded-xl bg-neon px-4 py-3 text-sm font-semibold text-base transition-all hover:brightness-110 disabled:opacity-40">
@@ -1674,6 +1823,7 @@ document.addEventListener('alpine:init', () => {
       { id: 'finance',   label: 'Бухгалтерия',    icon: 'wallet' },
       { id: 'crm',       label: 'Клиенты',          icon: 'messages-square' },
       { id: 'analytics', label: 'Аналитика',      icon: 'bar-chart-3' },
+      { id: 'wishlist',  label: 'Хотелки',        icon: 'sparkles' },
     ],
     setTab(id) { this.tab = id; },
 
@@ -1694,9 +1844,82 @@ document.addEventListener('alpine:init', () => {
     socialManual: {},                                // { ig:{value,url}, … }
     crypto: [],                                       // крипто-активы BMW
     socialHistory: {},                                // { platform: [{date,value}] }
+    /* ══ ХОТЕЛКИ ══ */
+    wishlist: [],
+    wishForm: { title: '', price: '', currency: 'BYN', priority: 2, url: '', note: '' },
+    wishFormOpen: false,
+    wishFilter: 'all',        // all | 1 | 2 | 3 | bought
+    wishSort: 'priority',     // priority | price_asc | price_desc
+    prioMeta: {
+      3: { label: 'Высокий',  cls: 'bg-accent/15 text-accent border-accent/30' },
+      2: { label: 'Средний',  cls: 'bg-neon/10 text-neon border-neon/25' },
+      1: { label: 'Низкий',   cls: 'bg-white/5 text-muted border-edge' },
+    },
+    get filteredWish() {
+      let list = this.wishlist.filter((w) => {
+        if (this.wishFilter === 'bought') return w.bought;
+        if (this.wishFilter === 'all') return !w.bought;
+        return !w.bought && String(w.priority) === String(this.wishFilter);
+      });
+      list = [...list];
+      if (this.wishSort === 'price_asc') list.sort((a, b) => (a.price || 0) - (b.price || 0));
+      else if (this.wishSort === 'price_desc') list.sort((a, b) => (b.price || 0) - (a.price || 0));
+      else list.sort((a, b) => (b.priority || 0) - (a.priority || 0));
+      return list;
+    },
+    get wishTotal() {
+      return this.wishlist.filter((w) => !w.bought).reduce((s, w) => s + (Number(w.price) || 0), 0);
+    },
+    fmtPrice(w) {
+      if (w.price == null || w.price === '') return '';
+      const sym = { BYN: 'Br', USD: '$', RUB: '₽' }[w.currency] || '';
+      return (w.currency === 'USD' ? sym + Number(w.price).toLocaleString('ru-RU')
+                                   : Number(w.price).toLocaleString('ru-RU') + ' ' + sym);
+    },
+    async loadWishlist() {
+      const { data, error } = await supabase.from('wishlist').select('*').order('created_at', { ascending: false });
+      if (error) { console.warn('[loadWishlist]', error.message); return; }
+      this.wishlist = (data || []).map((r) => ({
+        id: r.id, title: r.title, price: r.price != null ? Number(r.price) : null,
+        currency: r.currency || 'BYN', priority: r.priority || 2,
+        url: r.url || '', note: r.note || '', bought: !!r.bought,
+      }));
+    },
+    async addWish() {
+      if (!this.wishForm.title.trim()) return;
+      const row = {
+        id: uid(), title: this.wishForm.title.trim(),
+        price: this.wishForm.price === '' ? null : Number(this.wishForm.price),
+        currency: this.wishForm.currency, priority: Number(this.wishForm.priority),
+        url: this.wishForm.url.trim() || null, note: this.wishForm.note.trim() || null, bought: false,
+      };
+      const local = { ...row, price: row.price, url: row.url || '', note: row.note || '' };
+      this.wishlist.unshift(local);
+      this.wishForm = { title: '', price: '', currency: this.wishForm.currency, priority: 2, url: '', note: '' };
+      this.wishFormOpen = false;
+      const { error } = await supabase.from('wishlist').insert(row);
+      if (error) { this.wishlist = this.wishlist.filter((w) => w.id !== local.id); this.fail(error, 'Не удалось добавить.', false); }
+      else this.notify('Добавлено в хотелки', 'ok');
+    },
+    async toggleBought(id) {
+      const w = this.wishlist.find((w) => w.id === id);
+      if (!w) return;
+      w.bought = !w.bought;
+      const { error } = await supabase.from('wishlist').update({ bought: w.bought }).eq('id', id);
+      if (error) { w.bought = !w.bought; this.fail(error, 'Не удалось обновить.', false); }
+      else if (w.bought) this.notify('🎉 Куплено! Поздравляю', 'ok');
+    },
+    async deleteWish(id) {
+      const idx = this.wishlist.findIndex((w) => w.id === id);
+      if (idx === -1) return;
+      const removed = this.wishlist[idx];
+      this.wishlist.splice(idx, 1);
+      const { error } = await supabase.from('wishlist').delete().eq('id', id);
+      if (error) { this.wishlist.splice(idx, 0, removed); this.fail(error, 'Не удалось удалить.', false); }
+    },
     /* Конфиг всех площадок для вкладки «Аналитика» */
     socialConfig: [
-      { id: 'tg',      label: 'Telegram',  color: '#6366f1', live: true,  url: 'https://t.me/Alekseii_AI' },
+      { id: 'tg',      label: 'Telegram',  color: '#D4AF37', live: true,  url: 'https://t.me/Alekseii_AI' },
       { id: 'yt',      label: 'YouTube',   color: '#ef4444', live: true,  url: '' },
       { id: 'ig',      label: 'Instagram', color: '#ec4899', live: false, url: '' },
       { id: 'tiktok',  label: 'TikTok',    color: '#22d3ee', live: false, url: '' },
@@ -1743,7 +1966,7 @@ document.addEventListener('alpine:init', () => {
       },
       {
         id: 'media', name: 'AKU Media', kind: 'web',
-        kindLabel: 'Сайт + Telegram-канал', color: '#6366f1',
+        kindLabel: 'Сайт + Telegram-канал', color: '#D4AF37',
         seriesLabel: 'Сессии (14 дн.)', distLabel: 'Источники трафика',
         resources: [
           { label: 'Сайт',     url: 'https://akumedia.github.io/AKU-Media/' },
@@ -1783,7 +2006,7 @@ document.addEventListener('alpine:init', () => {
       },
       {
         id: 'jobshub', name: 'AKU Jobs Hub', kind: 'web',
-        kindLabel: 'Сайт + Telegram-бот + канал', color: '#6366f1',
+        kindLabel: 'Сайт + Telegram-бот + канал', color: '#D4AF37',
         seriesLabel: 'Сессии (14 дн.)', distLabel: 'Источники трафика',
         resources: [
           { label: 'Сайт',   url: 'https://akumedia.github.io/AKU-Jobs-Hub-Website/' },
@@ -1847,6 +2070,20 @@ document.addEventListener('alpine:init', () => {
 
     /* ══ ИНИЦИАЛИЗАЦИЯ ══ */
     mobileNav: false,         // выдвижное меню на телефоне
+    theme: 'dark',            // 'dark' | 'light'
+    initTheme() {
+      const saved = localStorage.getItem('aku-theme');
+      this.theme = saved === 'light' ? 'light' : 'dark';
+      this.applyTheme();
+    },
+    applyTheme() {
+      document.documentElement.setAttribute('data-theme', this.theme);
+    },
+    toggleTheme() {
+      this.theme = this.theme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('aku-theme', this.theme);
+      this.applyTheme();
+    },
 
     /* ══ АВТОРИЗАЦИЯ ══ */
     session: null,        // текущая сессия Supabase Auth
@@ -1987,6 +2224,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     async init() {
+      this.initTheme();     // тема из памяти браузера — до отрисовки
       // Вкладка запоминается в адресе (#crm) — переживает обновление
       // страницы и позволяет открыть нужный раздел по прямой ссылке.
       const fromHash = location.hash.replace('#', '');
@@ -2053,6 +2291,7 @@ document.addEventListener('alpine:init', () => {
         this.loadLiveStats();   // живая статистика соцсетей — не блокирует остальное
         this.loadSocialManual();
         this.loadCrypto();
+        this.loadWishlist();
         // История подписчиков: сначала грузим, потом снимок за сегодня
         this.loadSocialHistory().then(() => setTimeout(() => this.snapshotSocial(), 3000));
       } catch (err) {
@@ -2213,7 +2452,7 @@ document.addEventListener('alpine:init', () => {
       call:         { label: 'Созвон',         color: 'text-amber-400',bg: 'bg-amber-500/10 border-amber-500/25' },
       meeting:      { label: 'Встреча',        color: 'text-sky-400',  bg: 'bg-sky-500/10 border-sky-500/25' },
       payment:      { label: 'Оплата',         color: 'text-neon',     bg: 'bg-neon/10 border-neon/25' },
-      other:        { label: 'Другое',         color: 'text-muted',    bg: 'bg-white/5 border-edge' },
+      other:        { label: 'Другое',         color: 'text-muted',    bg: 'bg-ink/5 border-edge' },
     },
     iTypeOrder: ['message', 'kp', 'presentation', 'call', 'meeting', 'payment', 'other'],
     openFilesId: null,        // у какого клиента раскрыта панель файлов
