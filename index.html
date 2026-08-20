@@ -514,6 +514,72 @@
         <p class="mt-1 text-sm text-muted">Система конвертов: платёж → ручное распределение по счетам</p>
       </div>
 
+      <!-- ═══ Крипто-кошелёк BMW ═══ -->
+      <div class="relative overflow-hidden rounded-3xl border border-edge bg-panel p-6">
+        <div class="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-accent2/15 blur-3xl"></div>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl border border-accent2/25 bg-accent2/10 text-accent2">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M9.5 9.5h4a2 2 0 0 1 0 4h-4v-5m0 5v3m0-8V6.5m2 0V8m0 8v1.5"/></svg>
+            </div>
+            <div>
+              <p class="font-display text-base font-semibold text-white">Крипто-кошелёк · Фонд BMW</p>
+              <p class="text-xs text-muted">Живые цены обновляются автоматически</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="font-display text-3xl font-bold text-neon" x-text="money(Math.round(cryptoUsdTotal))"></p>
+            <p class="text-xs text-muted">≈ <span x-text="Math.round(cryptoUsdTotal / goal.target * 100)"></span>% к цели</p>
+          </div>
+        </div>
+
+        <!-- Форма добавления актива -->
+        <div class="mt-5 flex flex-wrap items-end gap-2">
+          <div>
+            <label class="mb-1 block text-[11px] text-muted">Актив</label>
+            <select x-model="cryptoForm.asset"
+              class="rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-accent2">
+              <template x-for="tk in Object.keys(cryptoIds)" :key="tk">
+                <option :value="tk" x-text="tk"></option>
+              </template>
+            </select>
+          </div>
+          <div class="flex-1">
+            <label class="mb-1 block text-[11px] text-muted">Количество</label>
+            <input x-model="cryptoForm.amount" inputmode="decimal" placeholder="0.00" @keydown.enter="addCrypto()"
+              class="w-full rounded-xl border border-edge bg-base px-3 py-2.5 text-sm text-white outline-none focus:border-accent2" />
+          </div>
+          <button @click="addCrypto()" :disabled="!cryptoForm.amount"
+            class="rounded-xl bg-accent2 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:brightness-110 disabled:opacity-40">
+            Добавить
+          </button>
+          <button @click="loadCryptoPrices()" :disabled="cryptoLoading" title="Обновить цены"
+            class="rounded-xl border border-edge p-2.5 text-muted transition-colors hover:text-white disabled:opacity-40">
+            <svg class="h-4 w-4" :class="cryptoLoading && 'animate-spin'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+          </button>
+        </div>
+
+        <!-- Список активов -->
+        <div class="mt-4 space-y-2">
+          <template x-for="h in crypto" :key="h.id">
+            <div class="flex items-center gap-3 rounded-xl border border-edge bg-base/40 px-4 py-3">
+              <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent2/10 font-display text-xs font-bold text-accent2" x-text="h.asset"></span>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm text-white"><span x-text="h.amount"></span> <span class="text-muted" x-text="h.asset"></span></p>
+                <p class="text-[11px] text-muted">
+                  курс <span x-text="cryptoPrices[h.asset] ? money(cryptoPrices[h.asset]) : '—'"></span>
+                </p>
+              </div>
+              <span class="font-display text-sm font-semibold text-white" x-text="money(Math.round(cryptoValue(h)))"></span>
+              <button @click="deleteCrypto(h.id)" class="text-muted transition-colors hover:text-red-400">✕</button>
+            </div>
+          </template>
+          <p x-show="!crypto.length" class="py-4 text-center text-sm text-muted/60">
+            Пока пусто — добавь актив, и стоимость сразу пойдёт в прогресс BMW
+          </p>
+        </div>
+      </div>
+
       <!-- Конверты -->
       <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <template x-for="e in envelopes" :key="e.id">
@@ -1209,6 +1275,51 @@
         <span x-show="statsUpdated" class="text-xs text-muted/60">обновлено <span x-text="statsUpdated"></span></span>
       </div>
 
+      <!-- ═══ Рост подписчиков ═══ -->
+      <div class="rounded-3xl border border-edge bg-panel p-6">
+        <div class="mb-1 flex items-center justify-between">
+          <h3 class="font-display text-base font-semibold text-white">Рост подписчиков</h3>
+          <span class="text-xs text-muted">снимки копятся автоматически при заходе</span>
+        </div>
+        <p class="mb-5 text-xs text-muted">История начнёт строиться с сегодняшнего дня — заходи, и график будет наполняться</p>
+        <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          <template x-for="s in socialConfig" :key="'h-' + s.id">
+            <div class="rounded-2xl border border-edge bg-base/40 p-4">
+              <div class="mb-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="h-2 w-2 rounded-full" :style="`background:${s.color}`"></span>
+                  <span class="text-sm font-medium text-white" x-text="s.label"></span>
+                </div>
+                <span class="text-xs font-semibold"
+                  :class="growthOf(s.id) > 0 ? 'text-neon' : growthOf(s.id) < 0 ? 'text-red-400' : 'text-muted'"
+                  x-text="(growthOf(s.id) > 0 ? '+' : '') + growthOf(s.id)"></span>
+              </div>
+              <!-- Мини-график (SVG-полилиния) -->
+              <div class="h-16">
+                <template x-if="historyOf(s.id).length >= 2">
+                  <svg viewBox="0 0 100 40" preserveAspectRatio="none" class="h-full w-full">
+                    <polyline fill="none" :stroke="s.color" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      :points="historyOf(s.id).map((p, i, arr) => {
+                        const xs = arr.length > 1 ? (i / (arr.length - 1)) * 100 : 0;
+                        const vals = arr.map(x => x.value);
+                        const mn = Math.min(...vals), mx = Math.max(...vals);
+                        const ys = mx === mn ? 20 : 38 - ((p.value - mn) / (mx - mn)) * 36;
+                        return xs + ',' + ys;
+                      }).join(' ')" />
+                  </svg>
+                </template>
+                <div x-show="historyOf(s.id).length < 2" class="flex h-full items-center justify-center text-xs text-muted/50">
+                  Нужно ещё пару дней данных
+                </div>
+              </div>
+              <p class="mt-2 text-xs text-muted">
+                сейчас <span class="font-semibold text-white" x-text="fmtNum(socialValue(s.id))"></span>
+              </p>
+            </div>
+          </template>
+        </div>
+      </div>
+
       <div class="border-t border-edge pt-6">
         <p class="mb-4 text-sm font-medium uppercase tracking-widest text-muted">Проекты и сайты (демо)</p>
       </div>
@@ -1581,6 +1692,8 @@ document.addEventListener('alpine:init', () => {
     statsError: '',
     liveStats: { telegram: null, youtube: null },   // полные живые данные
     socialManual: {},                                // { ig:{value,url}, … }
+    crypto: [],                                       // крипто-активы BMW
+    socialHistory: {},                                // { platform: [{date,value}] }
     /* Конфиг всех площадок для вкладки «Аналитика» */
     socialConfig: [
       { id: 'tg',      label: 'Telegram',  color: '#6366f1', live: true,  url: 'https://t.me/Alekseii_AI' },
@@ -1870,7 +1983,7 @@ document.addEventListener('alpine:init', () => {
       this.mfaFactorId = null; this.mfaChallengeId = null; this.mfaCode = ''; this.aalOk = true;
       // Чистим данные, чтобы они не остались на экране после выхода
       this.tasks = []; this.envelopes = []; this.transactions = []; this.crm = [];
-      this.files = {}; this.interactions = {};
+      this.files = {}; this.interactions = {}; this.crypto = []; this.socialHistory = {};
     },
 
     async init() {
@@ -1939,6 +2052,9 @@ document.addEventListener('alpine:init', () => {
         await this.loadInteractions();
         this.loadLiveStats();   // живая статистика соцсетей — не блокирует остальное
         this.loadSocialManual();
+        this.loadCrypto();
+        // История подписчиков: сначала грузим, потом снимок за сегодня
+        this.loadSocialHistory().then(() => setTimeout(() => this.snapshotSocial(), 3000));
       } catch (err) {
         // Показываем настоящий текст ошибки — так сразу видно причину
         // (сетевой сбой / неверный ключ / отсутствующая политика RLS и т.п.)
@@ -2018,10 +2134,69 @@ document.addEventListener('alpine:init', () => {
     /* ══ ПРОИЗВОДНЫЕ ЗНАЧЕНИЯ ══ */
     get totalBalance() { return this.envelopes.reduce((s, e) => s + e.balance, 0); },
     get goal() {
-      // Цель — это конверт, у которого задан target. Название и сумма
-      // приходят из БД, поэтому меняются одним UPDATE без правки кода.
-      // Фолбэк — пока данные грузятся или если конверта-цели нет.
-      return this.envelopes.find((e) => e.target) || { name: 'BMW M3', balance: 0, target: 50000 };
+      // Цель BMW: сумма — стоимость крипто-кошелька в $ (живые цены),
+      // target берём из конверта-цели (можно менять одним UPDATE).
+      const env = this.envelopes.find((e) => e.target);
+      return {
+        name: env?.name?.replace(/^Фонд\s+/i, '') || 'BMW M3',
+        target: env?.target || 50000,
+        balance: this.cryptoUsdTotal,
+      };
+    },
+    /* ══ КРИПТО-КОШЕЛЁК BMW ══ */
+    // Соответствие тикеров идентификаторам CoinGecko (для цен)
+    cryptoIds: {
+      BTC: 'bitcoin', ETH: 'ethereum', USDT: 'tether', USDC: 'usd-coin',
+      BNB: 'binancecoin', SOL: 'solana', TON: 'the-open-network',
+      XRP: 'ripple', TRX: 'tron', DOGE: 'dogecoin',
+    },
+    cryptoPrices: {},         // { BTC: 64000, … } — живые цены в $
+    cryptoLoading: false,
+    cryptoForm: { asset: 'USDT', amount: '', note: '' },
+    /** Стоимость одного актива в $ */
+    cryptoValue(h) { return (Number(h.amount) || 0) * (this.cryptoPrices[h.asset] || 0); },
+    /** Общая стоимость кошелька в $ */
+    get cryptoUsdTotal() {
+      return this.crypto.reduce((s, h) => s + this.cryptoValue(h), 0);
+    },
+    /** Живые цены с CoinGecko (без ключа, публичный API) */
+    async loadCryptoPrices() {
+      const ids = [...new Set(this.crypto.map((h) => this.cryptoIds[h.asset]).filter(Boolean))];
+      if (!ids.length) return;
+      this.cryptoLoading = true;
+      try {
+        const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=' + ids.join(',') + '&vs_currencies=usd');
+        const d = await r.json();
+        const px = {};
+        for (const [tk, id] of Object.entries(this.cryptoIds)) if (d[id]) px[tk] = d[id].usd;
+        this.cryptoPrices = px;
+      } catch (e) { console.warn('[crypto price]', e); }
+      finally { this.cryptoLoading = false; }
+    },
+    async loadCrypto() {
+      const { data, error } = await supabase.from('crypto_holdings').select('*').order('updated_at', { ascending: false });
+      if (error) { console.warn('[loadCrypto]', error.message); return; }
+      this.crypto = (data || []).map((r) => ({ id: r.id, asset: r.asset, amount: Number(r.amount), note: r.note || '' }));
+      await this.loadCryptoPrices();
+    },
+    async addCrypto() {
+      const amt = Number(this.cryptoForm.amount);
+      if (!this.cryptoForm.asset || !amt) return;
+      const row = { id: uid(), asset: this.cryptoForm.asset, amount: amt, note: this.cryptoForm.note.trim() || null };
+      const local = { id: row.id, asset: row.asset, amount: amt, note: row.note || '' };
+      this.crypto.unshift(local);
+      this.cryptoForm = { asset: 'USDT', amount: '', note: '' };
+      const { error } = await supabase.from('crypto_holdings').insert(row);
+      if (error) { this.crypto = this.crypto.filter((c) => c.id !== local.id); this.fail(error, 'Не удалось добавить актив.', false); }
+      else { this.loadCryptoPrices(); this.notify('Актив добавлен', 'ok'); }
+    },
+    async deleteCrypto(id) {
+      const idx = this.crypto.findIndex((c) => c.id === id);
+      if (idx === -1) return;
+      const removed = this.crypto[idx];
+      this.crypto.splice(idx, 1);
+      const { error } = await supabase.from('crypto_holdings').delete().eq('id', id);
+      if (error) { this.crypto.splice(idx, 0, removed); this.fail(error, 'Не удалось удалить.', false); }
     },
     get filteredTx() { return this.transactions.filter((t) => this.txFilter === 'all' || t.type === this.txFilter); },
 
@@ -2171,6 +2346,44 @@ document.addEventListener('alpine:init', () => {
       if (id === 'yt') return this.liveStats.youtube?.subs ?? null;
       const m = this.socialManual[id];
       return m && m.value != null ? Number(m.value) : null;
+    },
+
+    /* ── История подписчиков ── */
+    async loadSocialHistory() {
+      const { data, error } = await supabase.from('social_history')
+        .select('*').order('date', { ascending: true });
+      if (error) { console.warn('[loadSocialHistory]', error.message); return; }
+      const map = {};
+      (data || []).forEach((r) => {
+        (map[r.platform] = map[r.platform] || []).push({ date: r.date, value: Number(r.value) });
+      });
+      this.socialHistory = map;
+    },
+    /** Сохранить снимок текущих чисел (один на площадку в день) */
+    async snapshotSocial() {
+      const t = today();
+      const rows = [];
+      for (const s of this.socialConfig) {
+        const v = this.socialValue(s.id);
+        if (v != null) rows.push({ id: uid(), platform: s.id, value: v, date: t });
+      }
+      if (!rows.length) return;
+      // upsert по (platform,date,user_id): за день перезаписываем свежим числом
+      const { error } = await supabase.from('social_history')
+        .upsert(rows, { onConflict: 'platform,date,user_id', ignoreDuplicates: false });
+      if (error) { console.warn('[snapshotSocial]', error.message); return; }
+      await this.loadSocialHistory();
+    },
+    /** Точки графика для площадки (последние 30 снимков) */
+    historyOf(platform) {
+      const h = this.socialHistory[platform] || [];
+      return h.slice(-30);
+    },
+    /** Прирост за период: последнее минус первое */
+    growthOf(platform) {
+      const h = this.historyOf(platform);
+      if (h.length < 2) return 0;
+      return h[h.length - 1].value - h[0].value;
     },
 
     async loadInteractions() {
